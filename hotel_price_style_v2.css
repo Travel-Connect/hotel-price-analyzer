@@ -1,0 +1,1116 @@
+/* リセット & 基本設定 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* カラースキーム */
+    --primary: #2196F3;
+    --primary-dark: #1976D2;
+    --primary-light: #BBDEFB;
+    --success: #4CAF50;
+    --warning: #FF9800;
+    --danger: #F44336;
+    --background: #F5F5F5;
+    --card: #FFFFFF;
+    --text-primary: #212121;
+    --text-secondary: #757575;
+    --border: #E0E0E0;
+    
+    /* ダークモード */
+    --dark-background: #121212;
+    --dark-card: #1E1E1E;
+    --dark-text-primary: #FFFFFF;
+    --dark-text-secondary: #B3B3B3;
+    --dark-border: #2C2C2C;
+    
+    /* スペーシング */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    /* その他 */
+    --radius: 8px;
+    --shadow: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.15);
+    --transition: all 0.3s ease;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    background-color: var(--background);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* ダークモード */
+body.dark-mode {
+    background-color: var(--dark-background);
+    color: var(--dark-text-primary);
+}
+
+body.dark-mode .card {
+    background-color: var(--dark-card);
+    border-color: var(--dark-border);
+}
+
+/* ヘッダー */
+.app-header {
+    background: var(--card);
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: var(--transition);
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-md) var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.logo-space {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+.app-title {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.user-badge {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+/* ダウンロードボタン固定 */
+.download-buttons {
+    position: fixed;
+    top: 80px;
+    right: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    z-index: 90;
+}
+
+.btn-download {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+}
+
+.btn-download:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* メインコンテナ */
+.main-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+    padding-top: var(--spacing-xl);
+}
+
+/* カード基本スタイル */
+.card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow);
+    margin-bottom: var(--spacing-lg);
+    transition: var(--transition);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.card-title {
+    font-size: 1.25em;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* フィルターセクション */
+.filter-card {
+    position: relative;
+}
+
+.active-filters-badge {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    background: var(--primary);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 12px;
+    font-size: 0.85em;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.filter-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+/* 日付入力（カレンダーアイコン付き） */
+.date-input-wrapper {
+    position: relative;
+}
+
+.date-input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    padding-left: 40px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 1em;
+    transition: var(--transition);
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.date-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+/* マルチセレクト */
+.multiselect-wrapper {
+    position: relative;
+}
+
+.multiselect-input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.multiselect-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-top: var(--spacing-xs);
+    box-shadow: var(--shadow-lg);
+    display: none;
+    z-index: 50;
+}
+
+.multiselect-dropdown.active {
+    display: block;
+}
+
+.multiselect-search {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--card);
+}
+
+.multiselect-search input {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.multiselect-options {
+    padding: var(--spacing-sm);
+}
+
+.multiselect-option {
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.multiselect-option:hover {
+    background: var(--primary-light);
+}
+
+.multiselect-option.selected {
+    background: var(--primary);
+    color: white;
+}
+
+/* ボタン */
+.btn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--background);
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #45a049;
+}
+
+.btn-warning {
+    background: var(--warning);
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #f57c00;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+/* 統計パネル */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.stat-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: var(--spacing-lg);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+    border: 1px solid var(--border);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+}
+
+.stat-card.success::before { background: var(--success); }
+.stat-card.warning::before { background: var(--warning); }
+.stat-card.danger::before { background: var(--danger); }
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-md);
+    font-size: 1.5em;
+}
+
+.stat-label {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.stat-change {
+    font-size: 0.85em;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.stat-change.positive { color: var(--success); }
+.stat-change.negative { color: var(--danger); }
+
+/* データテーブル */
+.table-wrapper {
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em; /* Reduced font size for more data */
+}
+
+.data-table thead {
+    background: var(--background);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+.data-table th {
+    padding: var(--spacing-md);
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+
+.data-table th:hover {
+    background: var(--border);
+}
+
+.data-table th.sortable::after {
+    content: '↕';
+    margin-left: var(--spacing-xs);
+    opacity: 0.5;
+}
+
+.data-table th.sorted-asc::after { content: '↑'; opacity: 1; }
+.data-table th.sorted-desc::after { content: '↓'; opacity: 1; }
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+.data-table tbody tr:hover {
+    background: var(--background);
+}
+
+.data-table td {
+    padding: var(--spacing-md);
+    white-space: nowrap;
+}
+
+.data-table td:first-child,
+.data-table th:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--card);
+    z-index: 10;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+}
+
+/* 施設名カラムを2倍の幅に */
+.facility-name-column {
+    min-width: 300px;
+    width: 300px;
+}
+
+.price-cell {
+    text-align: right;
+    font-weight: 500;
+}
+
+.price-cell.available {
+    color: var(--text-primary);
+}
+
+.price-cell.unavailable {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.price-cell.low { background: rgba(76, 175, 80, 0.1); }
+.price-cell.medium { background: rgba(255, 152, 0, 0.1); }
+.price-cell.high { background: rgba(244, 67, 54, 0.1); }
+
+/* 差額表示モードのスタイル */
+.price-cell.higher {
+    background: rgba(244, 67, 54, 0.15);
+    color: #d32f2f;
+    font-weight: 600;
+}
+
+.price-cell.lower {
+    background: rgba(76, 175, 80, 0.15);
+    color: #388e3c;
+    font-weight: 600;
+}
+
+.price-cell.same {
+    background: rgba(158, 158, 158, 0.1);
+    color: #757575;
+}
+
+/* 週末・祝日のスタイル */
+.weekend-holiday {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.weekend-holiday-cell {
+    background-color: rgba(244, 67, 54, 0.05) !important;
+}
+
+/* 日付カラムのスタイル */
+.date-column {
+    text-align: center;
+    min-width: 80px;
+}
+
+/* グラフエリア */
+.chart-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 2px solid var(--border);
+}
+
+.chart-tab {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 500;
+    position: relative;
+    transition: var(--transition);
+}
+
+.chart-tab:hover {
+    color: var(--primary);
+}
+
+.chart-tab.active {
+    color: var(--primary);
+}
+
+.chart-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary);
+}
+
+.chart-container {
+    height: 400px;
+    position: relative;
+}
+
+.chart-controls {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.chart-control {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.chart-control:hover {
+    background: var(--background);
+}
+
+/* お気に入り & アラート */
+.favorite-toggle {
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.favorite-toggle.active {
+    color: var(--warning);
+}
+
+.alert-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--danger);
+    color: white;
+    border-radius: var(--radius);
+    font-size: 0.85em;
+}
+
+/* 比較モード */
+.comparison-panel {
+    position: fixed;
+    right: -400px;
+    top: 0;
+    bottom: 0;
+    width: 400px;
+    background: var(--card);
+    box-shadow: -4px 0 12px rgba(0,0,0,0.1);
+    transition: var(--transition);
+    z-index: 200;
+    overflow-y: auto;
+}
+
+.comparison-panel.active {
+    right: 0;
+}
+
+.comparison-header {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comparison-content {
+    padding: var(--spacing-lg);
+}
+
+/* ツールチップ */
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius);
+    font-size: 0.85em;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 300px;
+}
+
+.price-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius);
+    font-size: 0.85em;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 300px;
+    white-space: pre-line;
+}
+
+/* ダークモードトグル */
+.dark-mode-toggle {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: var(--spacing-md);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition);
+}
+
+.dark-mode-toggle:hover {
+    transform: scale(1.1);
+}
+
+/* 全画面モード */
+.fullscreen-toggle {
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius);
+    transition: var(--transition);
+}
+
+.fullscreen-toggle:hover {
+    background: var(--background);
+}
+
+body.fullscreen {
+    overflow: hidden;
+}
+
+body.fullscreen .main-container {
+    height: 100vh;
+    overflow-y: auto;
+}
+
+/* レスポンシブ */
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .download-buttons {
+        position: relative;
+        top: auto;
+        right: auto;
+        flex-direction: row;
+        margin-top: var(--spacing-md);
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+    
+    .table-wrapper {
+        font-size: 0.85em;
+    }
+    
+    .comparison-panel {
+        width: 100%;
+    }
+}
+
+/* アニメーション */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: slideIn 0.5s ease-out;
+}
+
+/* ローディング */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 追加のテーブルスタイル */
+.data-table {
+    font-size: 0.85em !important;
+}
+
+.data-table th {
+    padding: 8px 4px !important;
+    font-size: 0.9em !important;
+}
+
+.data-table td {
+    padding: 6px 4px !important;
+    font-size: 0.85em !important;
+}
+
+/* 施設名列の幅調整 */
+.data-table .facility-name-cell {
+    min-width: 200px !important;
+    width: 200px !important;
+    padding: 8px !important;
+}
+
+/* 金曜・土曜・祝日のスタイル */
+.data-table th .weekend-holiday {
+    color: #FF5722 !important;
+    font-weight: 700;
+}
+
+.data-table th .sunday {
+    color: #F44336 !important;
+}
+
+.price-cell.weekend-holiday-cell {
+    background-color: rgba(255, 152, 0, 0.15) !important;
+}
+
+.price-cell.sunday-cell {
+    background-color: rgba(244, 67, 54, 0.1) !important;
+}
+
+/* 平均行のスタイル */
+.average-row {
+    background-color: #f0f4f8 !important;
+    font-weight: bold;
+    border-top: 2px solid var(--primary);
+}
+
+.average-row td {
+    background-color: #f0f4f8 !important;
+}
+
+.average-cell {
+    color: var(--primary) !important;
+    font-weight: bold !important;
+}
+
+/* チャート説明文 */
+.chart-description {
+    background: #e8f4f8;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #2c5282;
+    border-left: 4px solid #3498db;
+}
+
+.chart-description i {
+    margin-right: 8px;
+    color: #3498db;
+}
+
+/* 統計カードのツールチップ */
+.stat-value.has-tooltip {
+    cursor: help;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 2px;
+}
+
+/* 価格セルのクリック可能スタイル */
+.price-cell[data-url]:not([data-url=""]):not([data-url="undefined"]) {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.price-cell[data-url]:not([data-url=""]):not([data-url="undefined"]):hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    position: relative;
+}
+
+/* クリッカブルセル */
+.price-cell[data-url]:not([data-url=""]):not([data-url="undefined"]) {
+    cursor: pointer;
+    position: relative;
+}
+
+.price-cell[data-url]:not([data-url=""]):not([data-url="undefined"]):hover {
+    background-color: var(--primary-light) !important;
+    text-decoration: underline;
+}
+
+/* ツールチップ付き要素 */
+.has-tooltip {
+    cursor: help;
+    position: relative;
+}
+
+.has-tooltip:hover {
+    color: var(--primary);
+}
+
+/* アラートダイアログ */
+.alert-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.alert-dialog-content {
+    background: var(--card);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+}
+
+.alert-dialog h3 {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 1em;
+}
+
+.dialog-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+    margin-top: var(--spacing-lg);
+}
+
+/* アラートリスト */
+.alert-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.alert-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition);
+}
+
+.alert-item.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.alert-item.inactive {
+    opacity: 0.6;
+}
+
+.alert-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.alert-info strong {
+    color: var(--text-primary);
+}
+
+.alert-info span {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+}
+
+.alert-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.btn-sm {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.85em;
+}
+
+.no-alerts {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: var(--spacing-xl);
+}
+
+/* アラート通知 */
+.alert-notification {
+    position: fixed;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    background: var(--card);
+    border: 2px solid var(--danger);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 1100;
+    animation: slideInRight 0.3s ease-out;
+}
+
+.alert-notification-content {
+    padding: var(--spacing-lg);
+}
+
+.alert-notification h4 {
+    color: var(--danger);
+    margin-bottom: var(--spacing-md);
+}
+
+.alert-notification pre {
+    background: var(--background);
+    padding: var(--spacing-md);
+    border-radius: var(--radius);
+    font-size: 0.85em;
+    margin: var(--spacing-md) 0;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ツールチップの改善 */
+.tooltip {
+    white-space: pre-line;
+    line-height: 1.4;
+}

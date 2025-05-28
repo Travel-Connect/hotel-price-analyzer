@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ホテル価格分析システム</title>
+    <link rel="stylesheet" href="hotel_price_style_v2.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- ローディングオーバーレイ -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- ヘッダー -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="logo-space">
+                    <i class="fas fa-hotel"></i>
+                </div>
+                <h1 class="app-title">ホテル価格分析システム</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-badge">
+                    <i class="fas fa-shield-alt"></i>
+                    <span id="userInfo">ゲストユーザー</span>
+                </div>
+                <button class="fullscreen-toggle" onclick="toggleFullscreen()" title="全画面表示">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ダウンロードボタン固定 -->
+    <div class="download-buttons">
+        <button class="btn-download" onclick="exportToCSV()" title="CSVダウンロード">
+            <i class="fas fa-file-csv"></i>
+            <span>CSV</span>
+        </button>
+        <button class="btn-download" onclick="saveChart()" title="グラフ保存">
+            <i class="fas fa-chart-line"></i>
+            <span>グラフ</span>
+        </button>
+    </div>
+
+    <!-- メインコンテナ -->
+    <div class="main-container">
+        <!-- ファイルアップロード -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-upload"></i>
+                    データアップロード
+                </h2>
+            </div>
+            <div class="upload-area">
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple style="display: none;">
+                <div class="upload-dropzone" id="uploadDropzone">
+                    <i class="fas fa-cloud-upload-alt fa-3x" style="color: var(--primary); margin-bottom: 16px;"></i>
+                    <p style="font-size: 1.1em; margin-bottom: 8px;">ファイルをドラッグ&ドロップ</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;">または</p>
+                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                        ファイルを選択
+                    </button>
+                    <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 16px;">
+                        対応形式: Excel (.xlsx, .xls), CSV
+                    </p>
+                </div>
+                <div id="fileList" class="file-list" style="margin-top: 16px;"></div>
+            </div>
+        </div>
+
+        <!-- フィルターセクション -->
+        <div class="card filter-card" id="filterSection" style="display: none;">
+            <div class="active-filters-badge" id="activeFiltersBadge" style="display: none;">
+                <i class="fas fa-filter"></i>
+                <span id="activeFiltersCount">0</span>
+            </div>
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-filter"></i>
+                    フィルター設定
+                </h2>
+            </div>
+            
+            <div class="filter-grid">
+                <!-- 日付範囲 -->
+                <div class="filter-group">
+                    <label class="filter-label">日付範囲</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div class="date-input-wrapper" style="flex: 1;">
+                            <i class="fas fa-calendar date-icon"></i>
+                            <input type="text" id="startDate" class="date-input" placeholder="開始日">
+                        </div>
+                        <span style="color: var(--text-secondary);">〜</span>
+                        <div class="date-input-wrapper" style="flex: 1;">
+                            <i class="fas fa-calendar date-icon"></i>
+                            <input type="text" id="endDate" class="date-input" placeholder="終了日">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 価格範囲 -->
+                <div class="filter-group">
+                    <label class="filter-label">価格範囲（円）</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="number" id="minPrice" class="date-input" placeholder="最低価格" style="flex: 1;">
+                        <span style="color: var(--text-secondary);">〜</span>
+                        <input type="number" id="maxPrice" class="date-input" placeholder="最高価格" style="flex: 1;">
+                    </div>
+                </div>
+
+                <!-- 施設選択 -->
+                <div class="filter-group">
+                    <label class="filter-label">施設選択</label>
+                    <div class="multiselect-wrapper">
+                        <div class="multiselect-input" id="facilitySelectInput">
+                            <span id="facilitySelectText">すべての施設</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="multiselect-dropdown" id="facilityDropdown">
+                            <div class="multiselect-search">
+                                <input type="text" id="facilitySearch" placeholder="施設名で検索...">
+                            </div>
+                            <div class="multiselect-options" id="facilityOptions"></div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- フィルターボタン -->
+                <div class="filter-group" style="display: flex; gap: 8px; align-items: flex-end;">
+                    <button class="btn btn-primary" onclick="applyFilters()">
+                        <i class="fas fa-check"></i>
+                        フィルター適用
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetFilters()">
+                        <i class="fas fa-redo"></i>
+                        リセット
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 統計情報パネル -->
+        <div class="card" id="statsPanel" style="display: none;">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-bar"></i>
+                    統計情報
+                </h2>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(33, 150, 243, 0.1); color: var(--primary);">
+                        <i class="fas fa-yen-sign"></i>
+                    </div>
+                    <div class="stat-label">平均価格</div>
+                    <div class="stat-value" id="avgPrice">-</div>
+                    <div class="stat-change positive" id="avgChange">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+5.2%</span>
+                    </div>
+                </div>
+
+                <div class="stat-card success">
+                    <div class="stat-icon" style="background: rgba(76, 175, 80, 0.1); color: var(--success);">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div class="stat-label">最高価格</div>
+                    <div class="stat-value" id="maxPriceVal">-</div>
+                    <div class="stat-change" id="maxFacility" style="font-size: 0.8em; color: var(--text-secondary);">
+                        <span>-</span>
+                    </div>
+                </div>
+
+                <div class="stat-card danger">
+                    <div class="stat-icon" style="background: rgba(244, 67, 54, 0.1); color: var(--danger);">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <div class="stat-label">最低価格</div>
+                    <div class="stat-value" id="minPriceVal">-</div>
+                    <div class="stat-change" id="minFacility" style="font-size: 0.8em; color: var(--text-secondary);">
+                        <span>-</span>
+                    </div>
+                </div>
+
+                <div class="stat-card warning">
+                    <div class="stat-icon" style="background: rgba(255, 152, 0, 0.1); color: var(--warning);">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-label">価格変動率</div>
+                    <div class="stat-value" id="priceVariation">-</div>
+                    <div class="stat-change neutral">
+                        <span>標準偏差</span>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(0, 188, 212, 0.1); color: #00BCD4;">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="stat-label">データ件数</div>
+                    <div class="stat-value" id="dataCount">-</div>
+                    <div class="stat-change">
+                        <span id="facilityCount">0施設</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- データテーブル -->
+        <div class="card" id="dataSection" style="display: none;">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-table"></i>
+                    価格データ
+                </h2>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" onclick="exportSelection()">
+                        <i class="fas fa-download"></i>
+                        選択をエクスポート
+                    </button>
+                    <button class="btn btn-secondary" onclick="toggleTableView()">
+                        <i class="fas fa-th"></i>
+                        表示切替
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-wrapper">
+                <table class="data-table" id="priceTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            
+            <div class="pagination" id="pagination" style="margin-top: 16px;"></div>
+        </div>
+
+        <!-- グラフエリア -->
+        <div class="card" id="analysisSection" style="display: none;">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-line"></i>
+                    データ分析
+                </h2>
+            </div>
+            
+            <div class="chart-tabs">
+                <button class="chart-tab active" data-chart="trend">
+                    <i class="fas fa-chart-line"></i>
+                    価格推移
+                </button>
+                <button class="chart-tab" data-chart="heatmap">
+                    <i class="fas fa-th"></i>
+                    ヒートマップ
+                </button>
+                <button class="chart-tab" data-chart="distribution">
+                    <i class="fas fa-chart-bar"></i>
+                    価格分布
+                </button>
+                <button class="chart-tab" data-chart="weekday">
+                    <i class="fas fa-calendar-week"></i>
+                    曜日別分析
+                </button>
+                <button class="chart-tab" data-chart="forecast">
+                    <i class="fas fa-chart-area"></i>
+                    予測分析
+                </button>
+                <button class="chart-tab" data-chart="comparison">
+                    <i class="fas fa-balance-scale"></i>
+                    施設比較
+                </button>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-controls">
+                    <button class="chart-control" onclick="resetZoom()" title="ズームリセット">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="chart-control" onclick="toggleChartType()" title="グラフタイプ切替">
+                        <i class="fas fa-exchange-alt"></i>
+                    </button>
+                </div>
+                <canvas id="analysisChart"></canvas>
+            </div>
+        </div>
+
+        <!-- アラート設定 -->
+        <div class="card" id="alertSection" style="display: none;">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-bell"></i>
+                    価格アラート設定
+                </h2>
+                <button class="btn btn-primary" id="addAlertBtn">
+                    <i class="fas fa-plus"></i>
+                    新規アラート
+                </button>
+            </div>
+            
+            <div class="alert-list" id="alertList">
+                <p class="no-alerts">アラートが設定されていません</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 比較パネル -->
+    <div class="comparison-panel" id="comparisonPanel">
+        <div class="comparison-header">
+            <h3>施設比較</h3>
+            <button class="btn btn-secondary" onclick="toggleComparison()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="comparison-content" id="comparisonContent">
+            <p style="color: var(--text-secondary);">比較する施設を選択してください</p>
+        </div>
+    </div>
+
+    <!-- ダークモードトグル -->
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="ダークモード切替">
+        <i class="fas fa-moon" id="darkModeIcon"></i>
+    </button>
+
+    <!-- スクリプト -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="hotel_price_app_v2.js"></script>
+</body>
+</html>

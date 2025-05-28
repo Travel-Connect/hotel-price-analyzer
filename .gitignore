@@ -1,0 +1,56 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules/
+
+# Test data
+*.csv
+*.xlsx
+*.xls
+
+# Temporary files
+*.tmp
+*.temp
+
+# Build output
+dist/
+build/
+
+# Local env files
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
+
+# Backup files
+*.bak
+*.backup
+
+# CLAUDE.md is for development notes only
+CLAUDE.md
+deployment.md
