@@ -1,0 +1,61 @@
+Windows Server (162.43.57.215) セットアップ手順
+
+=== 方法1: IISで公開（推奨）===
+
+1. IISのインストール確認
+   - サーバーマネージャーを開く
+   - 「役割と機能の追加」
+   - 「Webサーバー(IIS)」を選択してインストール
+
+2. ファイルの配置
+   - C:\inetpub\wwwroot\hotel-analyzer\ フォルダを作成
+   - 以下のファイルを配置：
+     * index.html
+     * hotel_price_app_v2.js
+     * hotel_price_style_v2.css
+
+3. IISでサイト設定
+   - IISマネージャーを開く（inetmgr）
+   - 「サイト」→「既定のWebサイト」を右クリック
+   - 「アプリケーションの追加」
+   - エイリアス: hotel-analyzer
+   - 物理パス: C:\inetpub\wwwroot\hotel-analyzer
+
+4. アクセス確認
+   - http://162.43.57.215/hotel-analyzer/
+   - または http://localhost/hotel-analyzer/
+
+=== 方法2: 簡易サーバー ===
+
+1. ファイルの配置
+   - C:\hotel-analyzer\ フォルダを作成
+   - ファイルを配置
+
+2. コマンドプロンプトで実行
+   cd C:\hotel-analyzer
+   python -m http.server 8080
+
+3. アクセス
+   - http://162.43.57.215:8080/
+
+=== ファイアウォール設定 ===
+
+Windows Defender ファイアウォールで許可：
+1. 「Windows Defender ファイアウォール」を開く
+2. 「詳細設定」
+3. 「受信の規則」→「新しい規則」
+4. ポート → TCP → 80 (IIS) または 8080
+5. 「接続を許可する」
+6. すべてのプロファイルにチェック
+7. 名前: Hotel Analyzer Web
+
+=== トラブルシューティング ===
+
+問題: ページが表示されない
+- ファイアウォールの設定を確認
+- IISが起動しているか確認
+- ファイルのパスが正しいか確認
+
+問題: JavaScriptが動作しない
+- ブラウザのコンソール（F12）でエラーを確認
+- ファイル名の大文字小文字を確認

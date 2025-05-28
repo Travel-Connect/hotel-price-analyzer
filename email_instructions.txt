@@ -1,0 +1,46 @@
+ホテル価格分析ツール - セットアップ手順
+
+このメールに添付されているファイル hotel-analyzer-windows.tar.gz には
+ホテル価格分析ツールが含まれています。
+
+【セットアップ手順】
+
+1. 添付ファイルをダウンロード
+   - hotel-analyzer-windows.tar.gz をデスクトップに保存
+
+2. ファイルを解凍
+   - ファイルを右クリック → 「すべて展開」
+   - または、PowerShellで：
+     cd Desktop
+     tar -xzf hotel-analyzer-windows.tar.gz
+
+3. フォルダを移動
+   - 解凍されたファイルを C:\hotel-analyzer\ に移動
+   - または任意の場所でもOK
+
+4. Webサーバーを起動
+   - start_windows_server.bat をダブルクリック
+   - メニューから選択：
+     1 → IISで公開（IISインストール済みの場合）
+     2 → Pythonサーバー（ポート8080）
+     3 → Pythonサーバー（ポート80）
+
+5. ブラウザでアクセス
+   - http://localhost （ポート80の場合）
+   - http://localhost:8080 （ポート8080の場合）
+   - http://162.43.57.215 （外部から）
+
+【含まれるファイル】
+- index.html - メインページ
+- hotel_price_app_v2.js - アプリケーションロジック
+- hotel_price_style_v2.css - スタイルシート
+- start_windows_server.bat - 起動スクリプト
+- Deploy-WindowsServer.ps1 - PowerShellデプロイスクリプト
+
+【トラブルシューティング】
+- ポートが使用中の場合は別のポートを選択
+- Windows Defenderでブロックされた場合は許可
+- 外部アクセスにはファイアウォール設定が必要
+
+【技術サポート】
+問題がある場合は、このメールに返信してください。

@@ -621,6 +621,101 @@ body.dark-mode .card {
 .chart-container {
     height: 400px;
     position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 10px;
+}
+
+/* スクロール可能なチャート用 */
+.chart-container.chart-scrollable {
+    max-width: 100%;
+}
+
+.chart-container .chart-scroll-wrapper {
+    min-width: 1200px; /* 最小幅を設定 */
+    height: 100%;
+}
+
+/* カスタムスクロールバー */
+.chart-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.chart-container::-webkit-scrollbar-track {
+    background: var(--background);
+    border-radius: 4px;
+}
+
+.chart-container::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.chart-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* ヒートマップコンテナ */
+#heatmapContainer {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    overflow: auto;
+    background: var(--card);
+    border-radius: var(--radius);
+}
+
+#heatmapContent {
+    transform-origin: top left;
+    transition: transform 0.3s ease;
+    min-width: 100%;
+}
+
+.heatmap-cell {
+    display: inline-block;
+    text-align: center;
+    border: 1px solid var(--border);
+    font-size: 0.75em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-md);
+    z-index: 10;
+    position: relative;
+}
+
+/* ヒートマップ凡例 */
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--background);
+    border-radius: var(--radius);
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.legend-title {
+    font-weight: 600;
+    margin-right: var(--spacing-sm);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.85em;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
 }
 
 .chart-controls {
@@ -1110,6 +1205,27 @@ body.fullscreen .main-container {
     border-radius: var(--radius);
     font-size: 0.85em;
     margin: var(--spacing-md) 0;
+}
+
+/* 該当なし通知 */
+.alert-notification.no-match {
+    border-color: var(--primary);
+}
+
+.alert-notification.no-match h4 {
+    color: var(--primary);
+}
+
+.alert-details {
+    background: var(--background);
+    padding: var(--spacing-md);
+    border-radius: var(--radius);
+    margin: var(--spacing-md) 0;
+}
+
+.alert-details small {
+    color: var(--text-secondary);
+    font-weight: 600;
 }
 
 @keyframes slideInRight {

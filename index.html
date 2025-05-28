@@ -132,6 +132,15 @@
                 </div>
 
 
+                <!-- 人数選択 -->
+                <div class="filter-group">
+                    <label class="filter-label">人数</label>
+                    <select id="guestCount" class="date-input" onchange="handleGuestCountChange()">
+                        <option value="2">2名</option>
+                        <option value="4">4名</option>
+                    </select>
+                </div>
+
                 <!-- フィルターボタン -->
                 <div class="filter-group" style="display: flex; gap: 8px; align-items: flex-end;">
                     <button class="btn btn-primary" onclick="applyFilters()">
@@ -284,7 +293,7 @@
                 </button>
             </div>
             
-            <div class="chart-container">
+            <div class="chart-container" id="chartContainer">
                 <div class="chart-controls">
                     <button class="chart-control" onclick="resetZoom()" title="ズームリセット">
                         <i class="fas fa-search-minus"></i>
@@ -292,8 +301,44 @@
                     <button class="chart-control" onclick="toggleChartType()" title="グラフタイプ切替">
                         <i class="fas fa-exchange-alt"></i>
                     </button>
+                    <button class="chart-control" id="heatmapZoomIn" style="display:none;" onclick="heatmapZoom(1.2)" title="拡大">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="chart-control" id="heatmapZoomOut" style="display:none;" onclick="heatmapZoom(0.8)" title="縮小">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
                 </div>
                 <canvas id="analysisChart"></canvas>
+                <div id="heatmapContainer" style="display:none; overflow:auto; max-height:400px;">
+                    <div id="heatmapLegend" class="heatmap-legend">
+                        <span class="legend-title">価格帯:</span>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:#e3f2fd;"></div>
+                            <span>最安値</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:#90caf9;"></div>
+                            <span>低価格</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:#ffd54f;"></div>
+                            <span>中価格</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:#ff9800;"></div>
+                            <span>高価格</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:#f44336;"></div>
+                            <span>最高値</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:#e0e0e0;"></div>
+                            <span>空室なし</span>
+                        </div>
+                    </div>
+                    <div id="heatmapContent"></div>
+                </div>
             </div>
         </div>
 

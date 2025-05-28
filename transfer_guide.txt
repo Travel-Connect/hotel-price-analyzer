@@ -1,0 +1,45 @@
+Windows Server (162.43.57.215) への転送手順
+
+=== 方法1: リモートデスクトップ経由（最も簡単）===
+
+1. このPCで圧縮ファイルを作成済み：
+   - hotel-analyzer-windows.tar.gz (26KB)
+
+2. ファイルを一時的にWebで公開：
+   cd /home/tatsu/claude-practice
+   python3 -m http.server 8000
+
+3. Windows Serverにリモートデスクトップで接続：
+   - IP: 162.43.57.215
+   - ユーザー名: Administrator（または指定のユーザー）
+
+4. Windows Server側で：
+   - ブラウザを開く
+   - http://[このPCのIP]:8000/hotel-analyzer-windows.tar.gz
+   - ダウンロード
+   - C:\に解凍
+
+5. start_windows_server.bat を実行
+
+=== 方法2: PowerShell（Windows Server側）===
+
+Windows Server側のPowerShellで実行：
+
+# ファイルを直接ダウンロード
+$url = "http://[このPCのIP]:8000/"
+$dest = "C:\hotel-analyzer\"
+New-Item -ItemType Directory -Path $dest -Force
+
+Invoke-WebRequest -Uri "$url/index.html" -OutFile "$dest\index.html"
+Invoke-WebRequest -Uri "$url/hotel_price_app_v2.js" -OutFile "$dest\hotel_price_app_v2.js"
+Invoke-WebRequest -Uri "$url/hotel_price_style_v2.css" -OutFile "$dest\hotel_price_style_v2.css"
+
+=== 方法3: SCP（要OpenSSH）===
+
+Windows Server側でOpenSSHサーバーを有効化：
+1. 設定 → アプリ → オプション機能
+2. OpenSSH サーバーを追加
+3. サービスで sshd を開始
+
+その後、このPCから：
+scp *.html *.js *.css Administrator@162.43.57.215:"C:/hotel-analyzer/"

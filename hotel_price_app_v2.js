@@ -13,6 +13,8 @@ let selectedFacilities = new Set();
 let comparisonMode = false;
 let detailData = {}; // 部屋タイプとプラン名を格納
 let showMedianMode = false; // 平均/中央値表示モード
+let guestCountData = { 2: null, 4: null }; // 人数別データ
+let currentGuestCount = 2; // 現在選択中の人数
 
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
@@ -2079,11 +2081,15 @@ function startAlertMonitoring() {
 function checkAlerts() {
     if (!filteredData || filteredData.length === 0) return;
     
-    const notifications = [];
+    // アクティブなアラートがない場合は何もしない
+    const activeAlerts = priceAlerts.filter(a => a.active);
+    if (activeAlerts.length === 0) return;
     
-    priceAlerts.forEach(alert => {
-        if (!alert.active) return;
-        
+    const notifications = [];
+    let checkedCount = 0;
+    
+    activeAlerts.forEach(alert => {
+        checkedCount++;
         const facilityData = filteredData.filter(d => d.facility === alert.facility && d.price > 0);
         
         facilityData.forEach(data => {
@@ -2096,7 +2102,8 @@ function checkAlerts() {
                     date: data.date,
                     price: data.price,
                     condition: alert.condition,
-                    threshold: alert.price
+                    threshold: alert.price,
+                    alertId: alert.id
                 });
             }
         });
@@ -2104,6 +2111,9 @@ function checkAlerts() {
     
     if (notifications.length > 0) {
         showAlertNotifications(notifications);
+    } else if (checkedCount > 0) {
+        // 該当なし通知を表示
+        showNoMatchNotification(checkedCount);
     }
 }
 
@@ -2144,6 +2154,49 @@ function toggleAverageMode() {
     renderTable();
 }
 
+// 人数切り替え処理
+function handleGuestCountChange() {
+    const guestCount = parseInt(document.getElementById('guestCount').value);
+    
+    // 現在のデータを保存
+    if (originalData.length > 0) {
+        guestCountData[currentGuestCount] = {
+            originalData: [...originalData],
+            filteredData: [...filteredData],
+            facilityNames: [...facilityNames],
+            dateColumns: [...dateColumns],
+            detailData: {...detailData}
+        };
+    }
+    
+    // 新しい人数のデータに切り替え
+    currentGuestCount = guestCount;
+    
+    if (guestCountData[guestCount]) {
+        // 保存済みデータがある場合は復元
+        const savedData = guestCountData[guestCount];
+        originalData = [...savedData.originalData];
+        filteredData = [...savedData.filteredData];
+        facilityNames = [...savedData.facilityNames];
+        dateColumns = [...savedData.dateColumns];
+        detailData = {...savedData.detailData};
+        
+        // UIを更新
+        updateFacilitySelect();
+        applyFilters();
+    } else {
+        // データがない場合はリセット
+        originalData = [];
+        filteredData = [];
+        facilityNames = [];
+        dateColumns = [];
+        detailData = {};
+        
+        // メッセージ表示
+        showError(`${guestCount}名分のデータをアップロードしてください`);
+    }
+}
+
 // グローバル関数として公開
 window.exportSelection = exportSelection;
 window.toggleTableView = toggleTableView;
@@ -2153,3 +2206,55 @@ window.resetZoom = resetZoom;
 window.toggleChartType = toggleChartType;
 window.toggleFullscreen = toggleFullscreen;
 window.toggleAverageMode = toggleAverageMode;
+window.handleGuestCountChange = handleGuestCountChange;
+
+// ヒートマップズーム機能
+let heatmapZoomLevel = 1;
+
+function heatmapZoom(factor) {
+    heatmapZoomLevel *= factor;
+    heatmapZoomLevel = Math.max(0.5, Math.min(3, heatmapZoomLevel)); // 0.5倍から3倍まで
+    
+    const heatmapContent = document.getElementById('heatmapContent');
+    if (heatmapContent) {
+        heatmapContent.style.transform = `scale(${heatmapZoomLevel})`;
+    }
+}
+
+window.heatmapZoom = heatmapZoom;
+
+// 該当なし通知表示
+function showNoMatchNotification(alertCount) {
+    const notification = document.createElement('div');
+    notification.className = 'alert-notification no-match';
+    
+    notification.innerHTML = `
+        <div class="alert-notification-content">
+            <h4>
+                <i class="fas fa-info-circle"></i>
+                価格アラート確認結果
+            </h4>
+            <p>${alertCount}件のアラート条件をチェックしましたが、該当する価格はありませんでした。</p>
+            <div class="alert-details">
+                <small>設定された条件:</small>
+                <ul style="margin: 8px 0; padding-left: 20px;">
+                    ${priceAlerts.filter(a => a.active).map(a => 
+                        `<li>${a.facility} - ${a.condition === 'below' ? '以下' : '以上'} ¥${a.price.toLocaleString()}</li>`
+                    ).join('')}
+                </ul>
+            </div>
+            <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">
+                OK
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // 8秒後に自動で消える
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 8000);
+}
