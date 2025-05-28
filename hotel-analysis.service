@@ -1,0 +1,22 @@
+[Unit]
+Description=Hotel Price Analysis Secure Server
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/hotel-analysis
+Environment="PATH=/usr/bin"
+ExecStart=/usr/bin/python3 /var/www/hotel-analysis/hotel_secure_server.py
+Restart=always
+RestartSec=10
+
+# セキュリティ設定
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/hotel-analysis
+
+[Install]
+WantedBy=multi-user.target

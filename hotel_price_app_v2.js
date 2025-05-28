@@ -12,6 +12,7 @@ let favorites = new Set();
 let selectedFacilities = new Set();
 let comparisonMode = false;
 let detailData = {}; // 部屋タイプとプラン名を格納
+let showMedianMode = false; // 平均/中央値表示モード
 
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
@@ -556,7 +557,7 @@ function updateStatistics() {
         document.getElementById('avgPrice').textContent = '-';
         document.getElementById('maxPriceVal').textContent = '-';
         document.getElementById('minPriceVal').textContent = '-';
-        document.getElementById('priceVariation').textContent = '-';
+        document.getElementById('medianPrice').textContent = '-';
         document.getElementById('dataCount').textContent = '-';
         return;
     }
@@ -564,8 +565,12 @@ function updateStatistics() {
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
     const max = Math.max(...prices);
     const min = Math.min(...prices);
-    const stdDev = Math.sqrt(prices.reduce((sq, n) => sq + Math.pow(n - avg, 2), 0) / prices.length);
-    const variation = (stdDev / avg * 100).toFixed(1);
+    
+    // 中央値を計算
+    const sortedPrices = [...prices].sort((a, b) => a - b);
+    const median = sortedPrices.length % 2 === 0
+        ? (sortedPrices[sortedPrices.length / 2 - 1] + sortedPrices[sortedPrices.length / 2]) / 2
+        : sortedPrices[Math.floor(sortedPrices.length / 2)];
     
     // 最高/最低価格の施設を特定
     const maxItem = filteredData.find(d => d.price === max);
@@ -589,7 +594,7 @@ function updateStatistics() {
         minPriceElement.classList.add('has-tooltip');
     }
     
-    document.getElementById('priceVariation').textContent = `${variation}%`;
+    document.getElementById('medianPrice').textContent = formatPrice(Math.round(median));
     document.getElementById('dataCount').textContent = filteredData.length.toLocaleString();
     
     document.getElementById('maxFacility').textContent = maxItem ? maxItem.facility : '-';
@@ -638,7 +643,7 @@ function addStatHoverEvents() {
 
 // 価格フォーマット
 function formatPrice(price) {
-    if (!price || price === 0) return '-';
+    if (!price || price === 0) return 'CLOSE';
     return `¥${price.toLocaleString()}`;
 }
 
@@ -682,18 +687,17 @@ function renderTable() {
             const priceClass = getPriceClass(price);
             const cellClass = price > 0 ? 'available' : 'unavailable';
             
-            // 金曜・土曜・祝日判定
+            // 曜日判定
             const d = new Date(date);
             const dayOfWeek = d.getDay();
-            const isFriday = dayOfWeek === 5;
             const isSaturday = dayOfWeek === 6;
             const isSunday = dayOfWeek === 0;
             const isHoliday = checkIsHoliday(date);
             let dateClass = '';
-            if (isFriday || isSaturday || isHoliday) {
-                dateClass = 'weekend-holiday-cell';
-            } else if (isSunday) {
-                dateClass = 'sunday-cell';
+            if (isSaturday) {
+                dateClass = 'saturday-cell';
+            } else if (isSunday || isHoliday) {
+                dateClass = 'sunday-holiday-cell';
             }
             
             // 詳細情報をデータ属性として追加
@@ -729,36 +733,47 @@ function renderTable() {
         return row;
     }).join('');
     
-    // 平均行を追加
+    // 平均または中央値行を追加
     if (pageData.length > 0) {
-        let avgRow = '<tr class="average-row">';
-        avgRow += '<td class="facility-name-cell" style="min-width: 200px; width: 200px;"><strong>平均</strong></td>';
+        let statsRow = '<tr class="average-row">';
+        statsRow += `<td class="facility-name-cell" style="min-width: 200px; width: 200px;"><strong>${showMedianMode ? '中央値' : '平均'}</strong></td>`;
         
-        avgRow += uniqueDates.map(date => {
+        statsRow += uniqueDates.map(date => {
             // 該当日付の価格を集計
             const pricesForDate = pageData.map(facility => pivotData[facility][date] || 0).filter(p => p > 0);
-            const avgPrice = pricesForDate.length > 0 ? 
-                Math.round(pricesForDate.reduce((a, b) => a + b, 0) / pricesForDate.length) : 0;
+            let statPrice = 0;
+            
+            if (pricesForDate.length > 0) {
+                if (showMedianMode) {
+                    // 中央値を計算
+                    const sorted = [...pricesForDate].sort((a, b) => a - b);
+                    statPrice = sorted.length % 2 === 0
+                        ? Math.round((sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2)
+                        : sorted[Math.floor(sorted.length / 2)];
+                } else {
+                    // 平均を計算
+                    statPrice = Math.round(pricesForDate.reduce((a, b) => a + b, 0) / pricesForDate.length);
+                }
+            }
             
             // 日付のクラスを設定
             const d = new Date(date);
             const dayOfWeek = d.getDay();
-            const isFriday = dayOfWeek === 5;
             const isSaturday = dayOfWeek === 6;
             const isSunday = dayOfWeek === 0;
             const isHoliday = checkIsHoliday(date);
             let dateClass = '';
-            if (isFriday || isSaturday || isHoliday) {
-                dateClass = 'weekend-holiday-cell';
-            } else if (isSunday) {
-                dateClass = 'sunday-cell';
+            if (isSaturday) {
+                dateClass = 'saturday-cell';
+            } else if (isSunday || isHoliday) {
+                dateClass = 'sunday-holiday-cell';
             }
             
-            return `<td class="price-cell average-cell ${dateClass}">${formatPrice(avgPrice)}</td>`;
+            return `<td class="price-cell average-cell ${dateClass}">${formatPrice(statPrice)}</td>`;
         }).join('');
         
-        avgRow += '</tr>';
-        rows += avgRow;
+        statsRow += '</tr>';
+        rows += statsRow;
     }
     
     tableBody.innerHTML = rows;
@@ -2122,6 +2137,13 @@ function showAlertNotifications(notifications) {
     }, 10000);
 }
 
+// 平均/中央値表示モード切替
+function toggleAverageMode() {
+    showMedianMode = !showMedianMode;
+    document.getElementById('averageModeText').textContent = showMedianMode ? '平均表示' : '中央値表示';
+    renderTable();
+}
+
 // グローバル関数として公開
 window.exportSelection = exportSelection;
 window.toggleTableView = toggleTableView;
@@ -2130,3 +2152,4 @@ window.saveChart = saveChart;
 window.resetZoom = resetZoom;
 window.toggleChartType = toggleChartType;
 window.toggleFullscreen = toggleFullscreen;
+window.toggleAverageMode = toggleAverageMode;

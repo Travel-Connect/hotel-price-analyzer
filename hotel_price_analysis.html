@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宿泊施設料金分析システム</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+    <link rel="stylesheet" href="hotel_price_style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/ja.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- ユーザー情報表示 -->
+    <div id="userInfo" class="user-info" style="display: none;">
+        <span id="userName"></span>
+        <span id="userRole"></span>
+        <button onclick="logout()" class="logout-btn">ログアウト</button>
+    </div>
+    
+    <div class="app-container">
+        <header>
+            <h1>🏨 宿泊施設料金分析システム</h1>
+            <p class="subtitle">日別料金データの詳細分析</p>
+        </header>
+
+        <!-- ファイルアップロードセクション -->
+        <section class="upload-section">
+            <div class="upload-box">
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple style="display: none;">
+                <label for="fileInput" class="upload-label">
+                    <svg class="upload-icon" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span class="upload-text">Excel/CSVファイルをクリックまたはドラッグ＆ドロップ</span>
+                    <span class="upload-format">対応形式: .xlsx, .xls, .csv（複数ファイル可）</span>
+                </label>
+                <div id="fileList" class="file-list"></div>
+            </div>
+            
+            <!-- ファイル比較モード -->
+            <div id="comparisonMode" class="comparison-mode" style="display: none;">
+                <h3>📊 ファイル比較モード</h3>
+                <div class="comparison-controls">
+                    <select id="baseFile" class="file-select">
+                        <option value="">基準ファイルを選択</option>
+                    </select>
+                    <select id="compareFile" class="file-select">
+                        <option value="">比較ファイルを選択</option>
+                    </select>
+                    <button id="compareBtn" class="btn-primary">比較実行</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- フィルターセクション -->
+        <section id="filterSection" class="filter-section" style="display: none;">
+            <h2>フィルター設定</h2>
+            <div id="activeFilters" class="active-filters">フィルターなし</div>
+            
+            <div class="filter-grid">
+                <!-- 日付範囲選択 -->
+                <div class="filter-group">
+                    <label>日付範囲</label>
+                    <div class="date-inputs">
+                        <input type="text" id="startDate" placeholder="開始日" class="date-input">
+                        <span>〜</span>
+                        <input type="text" id="endDate" placeholder="終了日" class="date-input">
+                    </div>
+                </div>
+
+                <!-- 価格帯フィルター -->
+                <div class="filter-group">
+                    <label>価格帯（円）</label>
+                    <div class="price-inputs">
+                        <input type="number" id="minPrice" placeholder="最低価格" min="0">
+                        <span>〜</span>
+                        <input type="number" id="maxPrice" placeholder="最高価格" min="0">
+                    </div>
+                </div>
+
+                <!-- 空室のみ表示 -->
+                <div class="filter-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="availableOnly">
+                        <span>空室のみ表示</span>
+                    </label>
+                </div>
+
+                <!-- フィルターボタン -->
+                <div class="filter-group">
+                    <button id="applyFilter" class="btn-primary">フィルター適用</button>
+                    <button id="resetFilter" class="btn-secondary">リセット</button>
+                </div>
+            </div>
+
+            <!-- 施設選択 -->
+            <div class="facility-filter">
+                <h3>施設選択</h3>
+                <div class="facility-controls">
+                    <button id="selectAll" class="btn-small">すべて選択</button>
+                    <button id="deselectAll" class="btn-small">すべて解除</button>
+                </div>
+                <div id="facilityList" class="facility-list"></div>
+            </div>
+        </section>
+
+        <!-- 統計情報パネル -->
+        <section id="statsPanel" class="stats-panel" style="display: none;">
+            <h2>統計情報</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">平均価格</div>
+                    <div class="stat-value" id="avgPrice">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">最高価格</div>
+                    <div class="stat-value" id="maxPriceVal">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">最低価格</div>
+                    <div class="stat-value" id="minPriceVal">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">価格変動率</div>
+                    <div class="stat-value" id="priceVariation">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">空室率</div>
+                    <div class="stat-value" id="availabilityRate">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">データ件数</div>
+                    <div class="stat-value" id="dataCount">-</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- データテーブル -->
+        <section id="dataSection" class="data-section" style="display: none;">
+            <div class="section-header">
+                <h2>料金データ</h2>
+                <div class="table-controls">
+                    <button id="exportCsv" class="btn-export">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        CSVエクスポート
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="priceTable" class="price-table">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            
+            <div id="pagination" class="pagination"></div>
+        </section>
+
+        <!-- 分析グラフ -->
+        <section id="analysisSection" class="analysis-section" style="display: none;">
+            <h2>価格分析</h2>
+            
+            <div class="chart-tabs">
+                <button class="chart-tab active" data-chart="trend">価格推移</button>
+                <button class="chart-tab" data-chart="daily">日別平均</button>
+                <button class="chart-tab" data-chart="weekday">曜日別分析</button>
+                <button class="chart-tab" data-chart="monthly">月別集計</button>
+                <button class="chart-tab" data-chart="prediction">価格予測</button>
+                <button class="chart-tab" data-chart="competitor">競合比較</button>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="analysisChart"></canvas>
+            </div>
+            
+            <button id="saveChart" class="btn-export">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                グラフを保存
+            </button>
+        </section>
+        
+        <!-- 価格予測セクション -->
+        <section id="predictionSection" class="prediction-section" style="display: none;">
+            <h2>🔮 価格予測</h2>
+            <div class="prediction-controls">
+                <label>予測期間（日数）：
+                    <input type="number" id="predictionDays" value="30" min="1" max="90">
+                </label>
+                <label>予測手法：
+                    <select id="predictionMethod">
+                        <option value="linear">線形回帰</option>
+                        <option value="seasonal">季節調整</option>
+                        <option value="arima">ARIMA</option>
+                    </select>
+                </label>
+                <button id="runPrediction" class="btn-primary">予測実行</button>
+            </div>
+            <div id="predictionResults" class="prediction-results"></div>
+        </section>
+        
+        <!-- アラート設定セクション -->
+        <section id="alertSection" class="alert-section" style="display: none;">
+            <h2>🔔 価格アラート設定</h2>
+            <div class="alert-form">
+                <div class="form-group">
+                    <label>施設選択：
+                        <select id="alertFacility" multiple size="5"></select>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>アラート条件：
+                        <select id="alertCondition">
+                            <option value="above">指定価格を超えた場合</option>
+                            <option value="below">指定価格を下回った場合</option>
+                            <option value="change">変動率が指定値を超えた場合</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>閾値：
+                        <input type="number" id="alertThreshold" placeholder="価格または変動率(%)">
+                    </label>
+                </div>
+                <button id="addAlert" class="btn-primary">アラート追加</button>
+            </div>
+            <div id="alertList" class="alert-list">
+                <h3>設定済みアラート</h3>
+                <div id="activeAlerts"></div>
+            </div>
+        </section>
+    </div>
+
+    <script src="hotel_price_app.js"></script>
+</body>
+</html>

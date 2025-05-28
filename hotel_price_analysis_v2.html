@@ -192,12 +192,12 @@
 
                 <div class="stat-card warning">
                     <div class="stat-icon" style="background: rgba(255, 152, 0, 0.1); color: var(--warning);">
-                        <i class="fas fa-chart-line"></i>
+                        <i class="fas fa-percentage"></i>
                     </div>
-                    <div class="stat-label">中央値</div>
-                    <div class="stat-value" id="medianPrice">-</div>
+                    <div class="stat-label">価格変動率</div>
+                    <div class="stat-value" id="priceVariation">-</div>
                     <div class="stat-change neutral">
-                        <span>中央価格</span>
+                        <span>標準偏差</span>
                     </div>
                 </div>
 
@@ -230,10 +230,6 @@
                     <button class="btn btn-secondary" onclick="toggleTableView()">
                         <i class="fas fa-th"></i>
                         表示切替
-                    </button>
-                    <button class="btn btn-secondary" onclick="toggleAverageMode()">
-                        <i class="fas fa-calculator"></i>
-                        <span id="averageModeText">中央値表示</span>
                     </button>
                 </div>
             </div>

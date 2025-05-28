@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>テストデータ生成</title>
+</head>
+<body>
+    <h1>ホテル価格分析用テストデータ生成</h1>
+    <button onclick="generateTestData()">テストデータをダウンロード</button>
+    
+    <script>
+    function generateTestData() {
+        // テストデータの生成
+        const facilities = [
+            'ホテル東京',
+            'グランドホテル大阪',
+            'シティホテル横浜',
+            'ビジネスホテル名古屋',
+            'リゾートホテル京都'
+        ];
+        
+        // 日付の生成（今日から30日分）
+        const dates = [];
+        const startDate = new Date();
+        for (let i = 0; i < 30; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            dates.push(date.toISOString().split('T')[0]);
+        }
+        
+        // CSVヘッダー
+        let csv = '施設名,' + dates.join(',') + '\n';
+        
+        // 各施設のデータ生成
+        facilities.forEach(facility => {
+            const row = [facility];
+            dates.forEach(date => {
+                const dayOfWeek = new Date(date).getDay();
+                const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+                
+                // 基本価格をランダムに設定
+                const basePrice = 8000 + Math.random() * 12000;
+                
+                // 週末は20%増し
+                const price = isWeekend ? Math.round(basePrice * 1.2) : Math.round(basePrice);
+                
+                // 10%の確率で空室なし
+                if (Math.random() < 0.1) {
+                    row.push(0);
+                } else {
+                    row.push(price);
+                }
+            });
+            csv += row.join(',') + '\n';
+        });
+        
+        // UTF-8 BOMを付けてダウンロード
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'test_hotel_prices.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        alert('テストデータを生成しました。hotel_price_analysis_v2.htmlでアップロードしてください。');
+    }
+    </script>
+</body>
+</html>

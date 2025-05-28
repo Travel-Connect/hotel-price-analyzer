@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "task": "プロジェクト提案書の作成",
+    "completed": true,
+    "priority": "high",
+    "created_at": "2025-05-20 09:00:00"
+  },
+  {
+    "id": 2,
+    "task": "チームミーティングの準備",
+    "completed": true,
+    "priority": "high",
+    "created_at": "2025-05-20 10:00:00"
+  },
+  {
+    "id": 3,
+    "task": "コードレビュー",
+    "completed": true,
+    "priority": "medium",
+    "created_at": "2025-05-21 14:00:00"
+  },
+  {
+    "id": 4,
+    "task": "バグ修正 - ログイン機能",
+    "completed": true,
+    "priority": "high",
+    "created_at": "2025-05-22 11:00:00"
+  },
+  {
+    "id": 5,
+    "task": "ドキュメント更新",
+    "completed": false,
+    "priority": "low",
+    "created_at": "2025-05-22 15:00:00"
+  },
+  {
+    "id": 6,
+    "task": "新機能の実装",
+    "completed": false,
+    "priority": "high",
+    "created_at": "2025-05-23 09:00:00"
+  },
+  {
+    "id": 7,
+    "task": "テストケースの作成",
+    "completed": true,
+    "priority": "medium",
+    "created_at": "2025-05-23 13:00:00"
+  },
+  {
+    "id": 8,
+    "task": "パフォーマンス最適化",
+    "completed": false,
+    "priority": "medium",
+    "created_at": "2025-05-24 10:00:00"
+  },
+  {
+    "id": 9,
+    "task": "セキュリティ監査",
+    "completed": true,
+    "priority": "high",
+    "created_at": "2025-05-24 14:00:00"
+  },
+  {
+    "id": 10,
+    "task": "リリースノート作成",
+    "completed": false,
+    "priority": "low",
+    "created_at": "2025-05-25 16:00:00"
+  }
+]

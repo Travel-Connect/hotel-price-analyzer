@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沖縄県入域観光客数分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="tourism_style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌺 沖縄県入域観光客数分析ダッシュボード</h1>
+            <p class="subtitle">Okinawa Tourism Statistics Dashboard</p>
+            <div class="auth-info">
+                <span id="username-display"></span>
+                <button onclick="logout()" class="logout-btn">ログアウト</button>
+            </div>
+        </header>
+
+        <div class="summary-cards">
+            <div class="card">
+                <h3>総観光客数</h3>
+                <p class="number" id="totalVisitors">-</p>
+                <p class="label">千人（2024年）</p>
+            </div>
+            <div class="card">
+                <h3>成長率</h3>
+                <p class="number" id="growthRate">-</p>
+                <p class="label">前年比</p>
+            </div>
+            <div class="card">
+                <h3>回復率</h3>
+                <p class="number" id="recoveryRate">-</p>
+                <p class="label">2019年比</p>
+            </div>
+            <div class="card">
+                <h3>外国人比率</h3>
+                <p class="number" id="foreignRatio">-</p>
+                <p class="label">全体に占める割合</p>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h2>年間観光客数推移</h2>
+                <canvas id="yearlyChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h2>月別観光客数（2023年）</h2>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h2>国・地域別訪問者（2023年）</h2>
+                <canvas id="countryChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h2>訪問目的別割合（2023年）</h2>
+                <canvas id="purposeChart"></canvas>
+            </div>
+        </div>
+
+        <div class="insights">
+            <h2>📊 主要インサイト</h2>
+            <ul id="insightsList">
+                <li>COVID-19の影響から着実に回復傾向にあります</li>
+                <li>夏季（7-8月）が最も観光客が多い時期です</li>
+                <li>アジア圏からの観光客が外国人訪問者の大半を占めています</li>
+                <li>観光・レジャー目的が全体の8割以上を占めています</li>
+            </ul>
+        </div>
+
+        <div class="controls">
+            <button onclick="updateData()">データ更新</button>
+            <button onclick="exportReport()">レポート出力</button>
+        </div>
+    </div>
+
+    <script src="tourism_app.js"></script>
+</body>
+</html>

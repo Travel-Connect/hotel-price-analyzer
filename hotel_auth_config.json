@@ -1,0 +1,70 @@
+{
+  "users": [
+    {
+      "id": "admin",
+      "password": "2f215b2ab49a5a6161c1b247ee5dc86733d76a62fc83dd437e70e3a564cbfed9",
+      "role": "admin",
+      "name": "管理者",
+      "email": "admin@hotelanalysis.com"
+    },
+    {
+      "id": "analyst01",
+      "password": "$2b$10$YourHashedPasswordHere",
+      "role": "analyst",
+      "name": "分析担当者1",
+      "email": "analyst01@hotelanalysis.com"
+    },
+    {
+      "id": "viewer01",
+      "password": "$2b$10$YourHashedPasswordHere",
+      "role": "viewer",
+      "name": "閲覧者1",
+      "email": "viewer01@hotelanalysis.com"
+    },
+    {
+      "id": "hotel_analyst",
+      "password": "e922b5a1aeee9dd6244941ed077861400b4e0233a65c9dc28bc2dfa0828b78e9",
+      "role": "analyst",
+      "name": "ホテル分析担当",
+      "email": "hotel_analyst@hotelanalysis.com"
+    },
+    {
+      "id": "hotel_viewer",
+      "password": "cf350895623a0f14b42e11b69afa3e85176bd43b7932002895cf552fbfc13b31",
+      "role": "viewer",
+      "name": "閲覧ユーザー",
+      "email": "hotel_viewer@hotelanalysis.com"
+    }
+  ],
+  "roles": {
+    "admin": {
+      "permissions": [
+        "view",
+        "edit",
+        "upload",
+        "download",
+        "manage_users",
+        "configure_alerts"
+      ]
+    },
+    "analyst": {
+      "permissions": [
+        "view",
+        "edit",
+        "upload",
+        "download",
+        "configure_alerts"
+      ]
+    },
+    "viewer": {
+      "permissions": [
+        "view",
+        "download"
+      ]
+    }
+  },
+  "session": {
+    "secret": "your-secret-key-here-change-in-production",
+    "expiry": 86400
+  }
+}

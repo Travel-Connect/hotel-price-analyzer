@@ -534,7 +534,9 @@ body.dark-mode .card {
 
 .price-cell.unavailable {
     color: var(--text-secondary);
-    opacity: 0.6;
+    opacity: 0.8;
+    font-weight: 600;
+    font-style: italic;
 }
 
 .price-cell.low { background: rgba(76, 175, 80, 0.1); }
@@ -565,8 +567,12 @@ body.dark-mode .card {
     font-weight: 600;
 }
 
-.weekend-holiday-cell {
-    background-color: rgba(244, 67, 54, 0.05) !important;
+.saturday-cell {
+    background-color: rgba(33, 150, 243, 0.1) !important;
+}
+
+.sunday-holiday-cell {
+    background-color: rgba(244, 67, 54, 0.1) !important;
 }
 
 /* 日付カラムのスタイル */
@@ -693,7 +699,8 @@ body.dark-mode .card {
 /* ツールチップ */
 .tooltip {
     position: absolute;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
     color: white;
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--radius);
@@ -701,16 +708,19 @@ body.dark-mode .card {
     pointer-events: none;
     z-index: 1000;
     max-width: 300px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .price-tooltip {
     position: absolute;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
     color: white;
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--radius);
     font-size: 0.85em;
     pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 1000;
     max-width: 300px;
     white-space: pre-line;
@@ -874,8 +884,12 @@ body.fullscreen .main-container {
     color: #F44336 !important;
 }
 
-.price-cell.weekend-holiday-cell {
-    background-color: rgba(255, 152, 0, 0.15) !important;
+.price-cell.saturday-cell {
+    background-color: rgba(33, 150, 243, 0.15) !important;
+}
+
+.price-cell.sunday-holiday-cell {
+    background-color: rgba(244, 67, 54, 0.15) !important;
 }
 
 .price-cell.sunday-cell {

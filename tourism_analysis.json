@@ -1,0 +1,231 @@
+{
+  "generated_at": "2025-05-27 18:36:12",
+  "recovery_trend": [
+    {
+      "year": 2020,
+      "total_recovery": 36.8,
+      "domestic_recovery": 51.8,
+      "foreign_recovery": 4.6
+    },
+    {
+      "year": 2021,
+      "total_recovery": 29.7,
+      "domestic_recovery": 43.4,
+      "foreign_recovery": 0.3
+    },
+    {
+      "year": 2022,
+      "total_recovery": 67.3,
+      "domestic_recovery": 97.1,
+      "foreign_recovery": 3.4
+    },
+    {
+      "year": 2023,
+      "total_recovery": 87.6,
+      "domestic_recovery": 109.7,
+      "foreign_recovery": 40.2
+    },
+    {
+      "year": 2024,
+      "total_recovery": 96.5,
+      "domestic_recovery": 106.8,
+      "foreign_recovery": 74.3
+    }
+  ],
+  "seasonal_patterns": [
+    {
+      "month": 1,
+      "avg_visitors": 575,
+      "avg_occupancy": 75.7,
+      "month_name": "1月"
+    },
+    {
+      "month": 2,
+      "avg_visitors": 605,
+      "avg_occupancy": 77.5,
+      "month_name": "2月"
+    },
+    {
+      "month": 3,
+      "avg_visitors": 733,
+      "avg_occupancy": 79.3,
+      "month_name": "3月"
+    },
+    {
+      "month": 4,
+      "avg_visitors": 665,
+      "avg_occupancy": 81.0,
+      "month_name": "4月"
+    },
+    {
+      "month": 5,
+      "avg_visitors": 707,
+      "avg_occupancy": 81.9,
+      "month_name": "5月"
+    },
+    {
+      "month": 6,
+      "avg_visitors": 650,
+      "avg_occupancy": 77.5,
+      "month_name": "6月"
+    },
+    {
+      "month": 7,
+      "avg_visitors": 791,
+      "avg_occupancy": 81.5,
+      "month_name": "7月"
+    },
+    {
+      "month": 8,
+      "avg_visitors": 842,
+      "avg_occupancy": 88.1,
+      "month_name": "8月"
+    },
+    {
+      "month": 9,
+      "avg_visitors": 732,
+      "avg_occupancy": 81.7,
+      "month_name": "9月"
+    },
+    {
+      "month": 10,
+      "avg_visitors": 723,
+      "avg_occupancy": 79.2,
+      "month_name": "10月"
+    },
+    {
+      "month": 11,
+      "avg_visitors": 668,
+      "avg_occupancy": 80.9,
+      "month_name": "11月"
+    },
+    {
+      "month": 12,
+      "avg_visitors": 672,
+      "avg_occupancy": 80.6,
+      "month_name": "12月"
+    }
+  ],
+  "market_composition": {
+    "year": 2024,
+    "by_country": [
+      {
+        "年": "2024",
+        "国・地域": "台湾",
+        "訪問者数": 720000,
+        "構成比(%)": 30.0,
+        "前年比(%)": 89.5
+      },
+      {
+        "年": "2024",
+        "国・地域": "韓国",
+        "訪問者数": 600000,
+        "構成比(%)": 25.0,
+        "前年比(%)": 87.5
+      },
+      {
+        "年": "2024",
+        "国・地域": "中国本土",
+        "訪問者数": 360000,
+        "構成比(%)": 15.0,
+        "前年比(%)": 100.0
+      },
+      {
+        "年": "2024",
+        "国・地域": "香港",
+        "訪問者数": 280000,
+        "構成比(%)": 11.7,
+        "前年比(%)": 86.7
+      },
+      {
+        "年": "2024",
+        "国・地域": "アメリカ",
+        "訪問者数": 200000,
+        "構成比(%)": 8.3,
+        "前年比(%)": 66.7
+      },
+      {
+        "年": "2024",
+        "国・地域": "タイ",
+        "訪問者数": 120000,
+        "構成比(%)": 5.0,
+        "前年比(%)": 50.0
+      },
+      {
+        "年": "2024",
+        "国・地域": "シンガポール",
+        "訪問者数": 80000,
+        "構成比(%)": 3.3,
+        "前年比(%)": 100.0
+      },
+      {
+        "年": "2024",
+        "国・地域": "オーストラリア",
+        "訪問者数": 30000,
+        "構成比(%)": 1.2,
+        "前年比(%)": 50.0
+      },
+      {
+        "年": "2024",
+        "国・地域": "その他",
+        "訪問者数": 10000,
+        "構成比(%)": 0.4,
+        "前年比(%)": 0.0
+      }
+    ],
+    "by_region": {
+      "東アジア": {
+        "visitors": 1960000,
+        "percentage": 81.7
+      },
+      "東南アジア": {
+        "visitors": 200000,
+        "percentage": 8.3
+      },
+      "欧米豪": {
+        "visitors": 230000,
+        "percentage": 9.6
+      },
+      "その他": {
+        "visitors": 10000,
+        "percentage": 0.4
+      }
+    },
+    "total_foreign": 2400000
+  },
+  "accommodation_trends": {
+    "リゾートホテル": {
+      "avg_occupancy": 78.5,
+      "avg_rate": 15986,
+      "total_guests": 12375645
+    },
+    "シティホテル": {
+      "avg_occupancy": 73.5,
+      "avg_rate": 8378,
+      "total_guests": 7688942
+    },
+    "ビジネスホテル": {
+      "avg_occupancy": 68.0,
+      "avg_rate": 5270,
+      "total_guests": 5326914
+    },
+    "民宿・ペンション": {
+      "avg_occupancy": 68.7,
+      "avg_rate": 4194,
+      "total_guests": 2724646
+    },
+    "簡易宿所": {
+      "avg_occupancy": 67.1,
+      "avg_rate": 3120,
+      "total_guests": 1807710
+    }
+  },
+  "latest_stats": {
+    "year": "2024",
+    "total_visitors": 9800000,
+    "domestic": 7400000,
+    "foreign": 2400000,
+    "tourism_revenue": 8000,
+    "per_capita_spending": 82000
+  }
+}

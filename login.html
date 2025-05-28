@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ログイン - 沖縄観光統計システム</title>
+    <link rel="stylesheet" href="login_style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>🌺 沖縄観光統計システム</h1>
+            <p class="subtitle">ログインしてください</p>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('login')">ログイン</button>
+                <button class="tab-btn" onclick="showTab('register')">新規登録</button>
+            </div>
+            
+            <!-- ログインフォーム -->
+            <div id="login-form" class="form-container active">
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-username">ユーザー名</label>
+                        <input type="text" id="login-username" required placeholder="ユーザー名を入力">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">パスワード</label>
+                        <input type="password" id="login-password" required placeholder="パスワードを入力">
+                    </div>
+                    
+                    <div class="form-group remember-me">
+                        <input type="checkbox" id="remember">
+                        <label for="remember">ログイン状態を保持する</label>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">ログイン</button>
+                </form>
+                
+                <div class="demo-info">
+                    <p>デモアカウント:</p>
+                    <code>demo / demo123</code>
+                </div>
+            </div>
+            
+            <!-- 登録フォーム -->
+            <div id="register-form" class="form-container">
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="reg-username">ユーザー名</label>
+                        <input type="text" id="reg-username" required 
+                               placeholder="3文字以上" minlength="3">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reg-email">メールアドレス</label>
+                        <input type="email" id="reg-email" placeholder="email@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reg-password">パスワード</label>
+                        <input type="password" id="reg-password" required 
+                               placeholder="6文字以上" minlength="6">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reg-password-confirm">パスワード（確認）</label>
+                        <input type="password" id="reg-password-confirm" required 
+                               placeholder="パスワードを再入力">
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">登録</button>
+                </form>
+            </div>
+            
+            <div id="message" class="message"></div>
+        </div>
+        
+        <div class="features">
+            <h2>システムの特徴</h2>
+            <ul>
+                <li>📊 リアルタイムの観光統計分析</li>
+                <li>📈 年次・月次データの可視化</li>
+                <li>🌏 国・地域別訪問者分析</li>
+                <li>🏨 宿泊施設稼働率モニタリング</li>
+                <li>📱 レスポンシブデザイン</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="login_app.js"></script>
+</body>
+</html>
