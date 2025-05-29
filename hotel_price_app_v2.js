@@ -15,6 +15,7 @@ let detailData = {}; // 部屋タイプとプラン名を格納
 let showMedianMode = false; // 平均/中央値表示モード
 let guestCountData = { 2: null, 4: null }; // 人数別データ
 let currentGuestCount = 2; // 現在選択中の人数
+let touristData = null; // 観光客数データ
 
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
@@ -63,12 +64,23 @@ function initializeEventListeners() {
     // ファイルアップロード
     document.getElementById('fileInput').addEventListener('change', handleFileUpload);
     
+    // 観光客数ファイルアップロード
+    document.getElementById('touristFileInput').addEventListener('change', handleTouristFileUpload);
+    
     // チャートタブ
     document.querySelectorAll('.chart-tab').forEach(tab => {
         tab.addEventListener('click', (e) => {
             document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
             e.currentTarget.classList.add('active');
             currentChartType = e.currentTarget.dataset.chart;
+            
+            // 観光客数分析タブの場合のみ施設フィルターを表示
+            if (currentChartType === 'tourist') {
+                showTouristFacilityFilter();
+            } else {
+                hideTouristFacilityFilter();
+            }
+            
             updateChart();
         });
     });
@@ -80,10 +92,10 @@ function initializeEventListeners() {
         }
     });
 
-    // 価格セルのホバーとクリックイベント
-    document.addEventListener('mouseover', handleCellHover);
-    document.addEventListener('mouseout', handleCellHoverOut);
-    document.addEventListener('click', handleCellClick);
+    // 価格セルのホバーとクリックイベント（グローバルイベントを無効化して重複を防ぐ）
+    // document.addEventListener('mouseover', handleCellHover);
+    // document.addEventListener('mouseout', handleCellHoverOut);
+    // document.addEventListener('click', handleCellClick);
 }
 
 // 日付ピッカーの初期化
@@ -302,6 +314,21 @@ function processDetailedCSVData(rows) {
         else if (h === '検索条件') headerMap.searchCondition = index;
     });
     
+    // 人数を検索条件から抽出
+    let guestCount = 2; // デフォルト
+    if (headerMap.searchCondition !== undefined && rows.length > 1) {
+        const searchCondition = rows[1][headerMap.searchCondition] || '';
+        const match = searchCondition.match(/大人の人数:\s*(\d+)/);
+        if (match) {
+            guestCount = parseInt(match[1]);
+        }
+    }
+    
+    // 人数別データを初期化
+    if (!guestCountData[guestCount]) {
+        guestCountData[guestCount] = [];
+    }
+    
     // データを処理
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -318,7 +345,7 @@ function processDetailedCSVData(rows) {
             datesSet.add(date);
             
             // 基本データ
-            originalData.push({
+            const dataItem = {
                 facility: facility,
                 date: date,
                 price: price,
@@ -326,7 +353,15 @@ function processDetailedCSVData(rows) {
                 roomType: roomType,
                 planName: planName,
                 url: row[headerMap.url] || ''
-            });
+            };
+            
+            // 人数別データに追加
+            guestCountData[guestCount].push(dataItem);
+            
+            // 現在の人数と一致する場合のみoriginalDataに追加
+            if (guestCount === currentGuestCount) {
+                originalData.push(dataItem);
+            }
             
             // 詳細データを保存
             const key = `${facility}_${date}`;
@@ -355,19 +390,44 @@ function processDetailedCSVData(rows) {
 function formatDateString(dateStr) {
     if (!dateStr) return '';
     
+    // 数値の場合（Excelの日付シリアル値）
+    if (typeof dateStr === 'number') {
+        return excelSerialToDate(dateStr);
+    }
+    
+    const str = dateStr.toString();
+    
     // すでに正しい形式の場合
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        return dateStr;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        return str;
     }
     
     // YYYY/MM/DD形式
-    if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(dateStr)) {
-        const parts = dateStr.split('/');
+    if (/^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}$/.test(str)) {
+        const parts = str.split(/[\/-]/);
         return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
     }
     
-    // その他の形式への対応も追加可能
-    return dateStr;
+    // MM/DD/YYYY形式
+    if (/^\d{1,2}[\/-]\d{1,2}[\/-]\d{4}$/.test(str)) {
+        const parts = str.split(/[\/-]/);
+        return `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+    }
+    
+    // M月D日形式
+    const jpDateMatch = str.match(/^(\d{1,2})月(\d{1,2})日$/);
+    if (jpDateMatch) {
+        const year = new Date().getFullYear();
+        return `${year}-${jpDateMatch[1].padStart(2, '0')}-${jpDateMatch[2].padStart(2, '0')}`;
+    }
+    
+    // YYYY年M月D日形式
+    const jpFullDateMatch = str.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/);
+    if (jpFullDateMatch) {
+        return `${jpFullDateMatch[1]}-${jpFullDateMatch[2].padStart(2, '0')}-${jpFullDateMatch[3].padStart(2, '0')}`;
+    }
+    
+    return str;
 }
 
 // 通常のCSVデータ処理（ピボット形式）
@@ -425,6 +485,34 @@ function showDataSections() {
     document.getElementById('dataSection').style.display = 'block';
     document.getElementById('analysisSection').style.display = 'block';
     document.getElementById('alertSection').style.display = 'block';
+    
+    // 日付範囲をデフォルト設定
+    setDefaultDateRange();
+}
+
+// デフォルト日付範囲を設定
+function setDefaultDateRange() {
+    if (dateColumns && dateColumns.length > 0) {
+        const sortedDates = [...dateColumns].sort();
+        const startDate = sortedDates[0];
+        const endDate = sortedDates[sortedDates.length - 1];
+        
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        
+        if (startDateInput && endDateInput) {
+            startDateInput.value = startDate;
+            endDateInput.value = endDate;
+            
+            // Flatpickrインスタンスがある場合は更新
+            if (startDateInput._flatpickr) {
+                startDateInput._flatpickr.setDate(startDate);
+            }
+            if (endDateInput._flatpickr) {
+                endDateInput._flatpickr.setDate(endDate);
+            }
+        }
+    }
 }
 
 // 施設選択の更新
@@ -492,6 +580,744 @@ function filterFacilities(searchTerm) {
     });
 }
 
+// Excelファイルを読み込む関数
+async function readExcelFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                resolve(jsonData);
+            } catch (error) {
+                reject(error);
+            }
+        };
+        
+        reader.onerror = function(error) {
+            reject(error);
+        };
+        
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+// 観光客数ファイルのアップロード処理
+async function handleTouristFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // ファイル名を表示
+    document.getElementById('touristFileName').textContent = file.name;
+    
+    showLoading(true);
+    
+    try {
+        let data;
+        
+        if (file.name.endsWith('.csv')) {
+            // CSVファイルの場合
+            data = await readCSVFile(file);
+        } else {
+            // Excelファイルの場合
+            data = await readExcelFile(file);
+        }
+        
+        console.log('観光客数データ構造:', data);
+        processTouristData(data);
+        
+        // 観光客数データが読み込まれたら、分析機能を有効化
+        enableTouristAnalysis();
+        
+    } catch (error) {
+        console.error('観光客数データの読み込みエラー:', error);
+        alert('観光客数データの読み込みに失敗しました。');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// CSVファイルを読み込む関数
+async function readCSVFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            try {
+                const text = e.target.result;
+                
+                // BOMを除去
+                const cleanText = text.replace(/^\uFEFF/, '');
+                
+                // CSVをパース（カンマ区切り）
+                const lines = cleanText.split(/\r?\n/);
+                const data = lines
+                    .filter(line => line.trim())
+                    .map(line => {
+                        // カンマで分割（引用符内のカンマは無視）
+                        const matches = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+                        return matches ? matches.map(cell => cell.replace(/^"|"$/g, '').trim()) : [];
+                    });
+                
+                resolve(data);
+            } catch (error) {
+                reject(error);
+            }
+        };
+        
+        reader.onerror = function(error) {
+            reject(error);
+        };
+        
+        // まずUTF-8として試す
+        reader.readAsText(file, 'UTF-8');
+        
+        // エラー時にShift-JISとして再試行
+        reader.onerror = function() {
+            const reader2 = new FileReader();
+            reader2.onload = function(e) {
+                try {
+                    const text = new TextDecoder('shift-jis').decode(e.target.result);
+                    const cleanText = text.replace(/^\uFEFF/, '');
+                    
+                    const lines = cleanText.split(/\r?\n/);
+                    const data = lines
+                        .filter(line => line.trim())
+                        .map(line => {
+                            const matches = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+                            return matches ? matches.map(cell => cell.replace(/^"|"$/g, '').trim()) : [];
+                        });
+                    
+                    resolve(data);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            reader2.readAsArrayBuffer(file);
+        };
+    });
+}
+
+// 観光客数データの処理
+function processTouristData(data) {
+    touristData = {
+        forecast: {},      // 予想データ
+        actual: {},        // 実績データ（オンハンド）
+        progress: {},      // 予約進捗データ
+        lastYear: {},      // 前年実績
+        twoYearsAgo: {}    // 一昨年実績
+    };
+    
+    if (!data || data.length < 1) {
+        console.error('データが不正です');
+        return;
+    }
+    
+    // デバッグ情報を表示
+    console.log('データ全体:', data);
+    console.log('データ行数:', data.length);
+    console.log('最初の5行:', data.slice(0, 5));
+    
+    // すべてのデータを調べて最適な処理方法を決定
+    let hasDateInHeader = false;
+    let hasDateInFirstColumn = false;
+    let dateColumnIndex = -1;
+    
+    // ヘッダー行を解析
+    if (data.length > 0) {
+        const headers = data[0];
+        console.log('ヘッダー:', headers);
+        
+        // ヘッダーに日付があるかチェック
+        for (let i = 0; i < headers.length; i++) {
+            if (headers[i] && (isDateFormat(headers[i].toString()) || typeof headers[i] === 'number')) {
+                hasDateInHeader = true;
+                if (dateColumnIndex === -1) dateColumnIndex = i;
+            }
+        }
+    }
+    
+    // 最初の列に日付があるかチェック（2行目以降）
+    if (data.length > 1) {
+        for (let i = 1; i < Math.min(data.length, 5); i++) {
+            if (data[i] && data[i][0] && (isDateFormat(data[i][0].toString()) || typeof data[i][0] === 'number')) {
+                hasDateInFirstColumn = true;
+                break;
+            }
+        }
+    }
+    
+    console.log('日付の位置 - ヘッダー:', hasDateInHeader, '最初の列:', hasDateInFirstColumn);
+    
+    // 処理方法を決定
+    if (hasDateInHeader && !hasDateInFirstColumn) {
+        // 横型：日付がヘッダーにある
+        console.log('横型データ構造として処理');
+        processHorizontalDataImproved(data);
+    } else if (hasDateInFirstColumn && !hasDateInHeader) {
+        // 縦型：日付が最初の列にある
+        console.log('縦型データ構造として処理');
+        processVerticalDataImproved(data);
+    } else if (data.length === 1 || (data.length === 2 && data[0].length === 2)) {
+        // 非常にシンプルなデータ
+        console.log('シンプルなデータ構造として処理');
+        processSimpleFormat(data);
+    } else {
+        // 汎用的な処理
+        console.log('汎用的な処理を実行');
+        processGenericFormat(data);
+    }
+    
+    console.log('処理後の観光客数データ:', touristData);
+}
+
+// 新しいフォーマットの処理（A列が項目名、B列以降が日付ごとのデータ）
+function processNewFormat(data) {
+    console.log('新しいフォーマットで処理開始');
+    
+    // ヘッダー行（日付が入っている）
+    const dateHeaders = data[0].slice(1); // B列以降
+    console.log('日付ヘッダー:', dateHeaders);
+    
+    // データ行を処理
+    for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length < 2) continue;
+        
+        const itemName = row[0]; // A列の項目名
+        if (!itemName) continue;
+        
+        console.log(`処理中の行 ${i}: ${itemName}`);
+        
+        // B列以降のデータを処理
+        for (let j = 1; j < row.length && j - 1 < dateHeaders.length; j++) {
+            const dateHeader = dateHeaders[j - 1];
+            if (!dateHeader) continue;
+            
+            // 日付をフォーマット
+            let formattedDate;
+            if (isDateFormat(dateHeader.toString())) {
+                formattedDate = formatDateString(dateHeader.toString());
+            } else if (typeof dateHeader === 'number') {
+                // Excelの日付シリアル値の場合
+                formattedDate = excelSerialToDate(dateHeader);
+            } else {
+                continue;
+            }
+            
+            const value = parseFloat(row[j]) || 0;
+            
+            if (value > 0) {
+                const itemNameLower = itemName.toString().toLowerCase();
+                
+                // 項目名から種別を判定
+                if (itemNameLower.includes('予測') || itemNameLower.includes('予想') || 
+                    itemNameLower.includes('forecast') || itemNameLower === '予測値') {
+                    touristData.forecast[formattedDate] = value;
+                } else if (itemNameLower.includes('実績') || itemNameLower.includes('確定') || 
+                           itemNameLower.includes('actual') || itemNameLower === '確定値') {
+                    touristData.actual[formattedDate] = value;
+                } else if (itemNameLower.includes('進捗') || itemNameLower.includes('オンハンド') || 
+                           itemNameLower.includes('progress') || itemNameLower === 'オンハンド') {
+                    touristData.progress[formattedDate] = value;
+                } else {
+                    // デフォルトは予測データとして扱う
+                    console.log(`不明な項目名「${itemName}」を予測データとして処理`);
+                    if (!touristData.forecast[formattedDate]) {
+                        touristData.forecast[formattedDate] = value;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// シンプルなフォーマットの処理（2列：日付と値）
+function processSimpleFormat(data) {
+    console.log('シンプルなフォーマットで処理開始');
+    
+    // ヘッダーを確認
+    const headers = data[0];
+    const hasHeader = headers.every(h => h && isNaN(parseFloat(h)));
+    
+    const startRow = hasHeader ? 1 : 0;
+    
+    for (let i = startRow; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length < 2) continue;
+        
+        // 日付を取得
+        let date = null;
+        const dateCell = row[0];
+        
+        if (dateCell) {
+            if (typeof dateCell === 'number') {
+                date = excelSerialToDate(dateCell);
+            } else if (isDateFormat(dateCell.toString())) {
+                date = formatDateString(dateCell.toString());
+            }
+        }
+        
+        if (!date) continue;
+        
+        // 値を取得
+        const value = parseFloat(row[1]) || 0;
+        
+        if (value > 0) {
+            // シンプルなフォーマットの場合、すべて予測データとして扱う
+            touristData.forecast[date] = value;
+        }
+    }
+}
+
+// 改善された横型データの処理
+function processHorizontalDataImproved(data) {
+    console.log('改善された横型データ処理開始');
+    
+    const headers = data[0];
+    let dateStartIndex = 1; // デフォルトは2列目から
+    
+    // 日付が始まる列を特定
+    for (let i = 0; i < headers.length; i++) {
+        if (headers[i] && (isDateFormat(headers[i].toString()) || typeof headers[i] === 'number')) {
+            dateStartIndex = i;
+            break;
+        }
+    }
+    
+    // データ行を処理
+    for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length < 2) continue;
+        
+        const itemName = row[0] || `データ${i}`;
+        console.log(`処理中: ${itemName}`);
+        
+        // 各日付のデータを処理
+        for (let j = dateStartIndex; j < headers.length && j < row.length; j++) {
+            const dateValue = headers[j];
+            if (!dateValue) continue;
+            
+            let date = formatDateString(dateValue);
+            const value = parseFloat(row[j]) || 0;
+            
+            if (value > 0) {
+                const itemNameLower = itemName.toString().toLowerCase();
+                
+                if (itemNameLower.includes('予測') || itemNameLower.includes('予想')) {
+                    touristData.forecast[date] = value;
+                } else if (itemNameLower.includes('オンハンド') || itemNameLower === 'オンハンド') {
+                    touristData.actual[date] = value;
+                } else if (itemNameLower.includes('前年') || itemNameLower === '前年') {
+                    touristData.lastYear[date] = value;
+                } else if (itemNameLower.includes('一昨年') || itemNameLower === '一昨年') {
+                    touristData.twoYearsAgo[date] = value;
+                } else if (itemNameLower.includes('進捗')) {
+                    touristData.progress[date] = value;
+                } else {
+                    // デフォルトは行番号で分類
+                    if (i === 1) touristData.forecast[date] = value;
+                    else if (i === 2) touristData.actual[date] = value;
+                    else if (i === 3) touristData.lastYear[date] = value;
+                    else if (i === 4) touristData.twoYearsAgo[date] = value;
+                }
+            }
+        }
+    }
+}
+
+// 改善された縦型データの処理
+function processVerticalDataImproved(data) {
+    console.log('改善された縦型データ処理開始');
+    
+    // ヘッダーから列の意味を特定
+    const headers = data[0];
+    const columnMap = new Map();
+    
+    headers.forEach((header, index) => {
+        if (!header) return;
+        const h = header.toString().toLowerCase();
+        
+        if (h.includes('日付') || h.includes('date')) {
+            columnMap.set('date', index);
+        } else if (h.includes('予測') || h.includes('予想')) {
+            columnMap.set('forecast', index);
+        } else if (h.includes('オンハンド') || h === 'オンハンド') {
+            columnMap.set('actual', index);
+        } else if (h.includes('前年') || h === '前年') {
+            columnMap.set('lastYear', index);
+        } else if (h.includes('一昨年') || h === '一昨年') {
+            columnMap.set('twoYearsAgo', index);
+        } else if (h.includes('実績') || h.includes('確定')) {
+            columnMap.set('actual', index);
+        } else if (h.includes('進捗')) {
+            columnMap.set('progress', index);
+        } else if (h.includes('値') || h.includes('value')) {
+            columnMap.set('value', index);
+        }
+    });
+    
+    // データ行を処理
+    for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length < 2) continue;
+        
+        let date = null;
+        
+        // 日付を取得
+        if (columnMap.has('date')) {
+            date = formatDateString(row[columnMap.get('date')]);
+        } else {
+            // 最初の列を日付として試す
+            date = formatDateString(row[0]);
+        }
+        
+        if (!date || date === row[0]) continue;
+        
+        // 各データタイプの値を取得
+        if (columnMap.has('forecast')) {
+            const value = parseFloat(row[columnMap.get('forecast')]) || 0;
+            if (value > 0) touristData.forecast[date] = value;
+        }
+        
+        if (columnMap.has('actual')) {
+            const value = parseFloat(row[columnMap.get('actual')]) || 0;
+            if (value > 0) touristData.actual[date] = value;
+        }
+        
+        if (columnMap.has('lastYear')) {
+            const value = parseFloat(row[columnMap.get('lastYear')]) || 0;
+            if (value > 0) touristData.lastYear[date] = value;
+        }
+        
+        if (columnMap.has('twoYearsAgo')) {
+            const value = parseFloat(row[columnMap.get('twoYearsAgo')]) || 0;
+            if (value > 0) touristData.twoYearsAgo[date] = value;
+        }
+        
+        if (columnMap.has('progress')) {
+            const value = parseFloat(row[columnMap.get('progress')]) || 0;
+            if (value > 0) touristData.progress[date] = value;
+        }
+        
+        // 単一の値列の場合
+        if (columnMap.has('value') && !columnMap.has('forecast')) {
+            const value = parseFloat(row[columnMap.get('value')]) || 0;
+            if (value > 0) touristData.forecast[date] = value;
+        }
+        
+        // 列が特定できない場合、2列目を値として使用
+        if (columnMap.size === 1 && columnMap.has('date')) {
+            const value = parseFloat(row[1]) || 0;
+            if (value > 0) touristData.forecast[date] = value;
+        }
+    }
+}
+
+// 汎用的なフォーマット処理
+function processGenericFormat(data) {
+    console.log('汎用的なフォーマット処理開始');
+    
+    // すべてのセルを調べて日付と数値のペアを探す
+    for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        if (!row) continue;
+        
+        for (let j = 0; j < row.length; j++) {
+            const cell = row[j];
+            if (!cell) continue;
+            
+            // このセルが日付の場合
+            const date = formatDateString(cell);
+            if (date && date !== cell.toString()) {
+                // 隣接するセルから値を探す
+                for (let k = j + 1; k < row.length; k++) {
+                    const value = parseFloat(row[k]);
+                    if (value > 0) {
+                        touristData.forecast[date] = value;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Excelの日付シリアル値を日付文字列に変換
+function excelSerialToDate(serial) {
+    // Excelの仕様:
+    // - シリアル値 1 = 1900年1月1日
+    // - シリアル値 2 = 1900年1月2日
+    
+    // Excelのシリアル値は1900年1月1日が1なので、
+    // 基準日は1899年12月30日（シリアル値0の前日）
+    const baseDate = new Date(Date.UTC(1899, 11, 30));
+    const millisecondsPerDay = 24 * 60 * 60 * 1000;
+    
+    // serial日を加算
+    const resultDate = new Date(baseDate.getTime() + serial * millisecondsPerDay);
+    
+    // UTC時間で年月日を取得
+    const year = resultDate.getUTCFullYear();
+    const month = String(resultDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(resultDate.getUTCDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+}
+
+// 日付形式かどうかチェック
+function isDateFormat(str) {
+    const datePatterns = [
+        /^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}$/,
+        /^\d{1,2}[\/-]\d{1,2}[\/-]\d{4}$/,
+        /^\d{1,2}月\d{1,2}日$/,
+        /^\d{4}年\d{1,2}月\d{1,2}日$/
+    ];
+    
+    return datePatterns.some(pattern => pattern.test(str));
+}
+
+// 横型データの処理
+function processHorizontalData(data, headers) {
+    // データ行を処理
+    for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length < 2) continue;
+        
+        const dataType = row[0]; // 予測値/オンハンド/進捗/確定値等
+        
+        for (let j = 1; j < headers.length && j < row.length; j++) {
+            const dateHeader = headers[j];
+            if (!dateHeader || !isDateFormat(dateHeader.toString())) continue;
+            
+            const value = parseFloat(row[j]) || 0;
+            
+            if (value > 0) {
+                const formattedDate = formatDateString(dateHeader.toString());
+                
+                // データタイプの判定
+                const typeStr = dataType ? dataType.toString().toLowerCase() : '';
+                
+                if (typeStr.includes('予測') || typeStr.includes('予想')) {
+                    touristData.forecast[formattedDate] = value;
+                } else if (typeStr.includes('実績') || typeStr.includes('確定')) {
+                    touristData.actual[formattedDate] = value;
+                } else if (typeStr.includes('進捗') || typeStr.includes('オンハンド')) {
+                    touristData.progress[formattedDate] = value;
+                }
+            }
+        }
+    }
+}
+
+// 縦型データの処理
+function processVerticalData(data) {
+    // ヘッダーから列の意味を判定
+    const headers = data[0];
+    let dateColIndex = -1;
+    let forecastColIndex = -1;
+    let actualColIndex = -1;
+    let progressColIndex = -1;
+    
+    // 列インデックスを特定
+    headers.forEach((header, index) => {
+        const h = header ? header.toString().toLowerCase() : '';
+        if (h.includes('日付') || h.includes('date')) {
+            dateColIndex = index;
+        } else if (h.includes('予測') || h.includes('予想') || h === 'forecast') {
+            forecastColIndex = index;
+        } else if (h.includes('実績') || h.includes('確定') || h === 'actual') {
+            actualColIndex = index;
+        } else if (h.includes('進捗') || h.includes('オンハンド') || h === 'progress') {
+            progressColIndex = index;
+        }
+    });
+    
+    // もし列が特定できない場合、値から判断
+    if (forecastColIndex === -1 && actualColIndex === -1 && progressColIndex === -1) {
+        console.log('列名から特定できないため、値で判断します');
+        
+        // 2列目以降の数値列を順番に割り当て
+        let numericColumns = [];
+        for (let i = 1; i < headers.length; i++) {
+            // 2行目の値をチェックして数値列を特定
+            if (data.length > 1 && data[1][i]) {
+                const val = parseFloat(data[1][i]);
+                if (!isNaN(val)) {
+                    numericColumns.push(i);
+                }
+            }
+        }
+        
+        // 数値列を順番に割り当て
+        if (numericColumns.length > 0) forecastColIndex = numericColumns[0];
+        if (numericColumns.length > 1) actualColIndex = numericColumns[1];
+        if (numericColumns.length > 2) progressColIndex = numericColumns[2];
+    }
+    
+    // データ行を処理
+    for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length < 2) continue;
+        
+        let date = null;
+        
+        // 日付を探す
+        if (dateColIndex >= 0 && row[dateColIndex]) {
+            date = formatDateString(row[dateColIndex].toString());
+        } else {
+            // 日付列が特定できない場合、各セルから日付を探す
+            for (let j = 0; j < row.length; j++) {
+                if (row[j] && isDateFormat(row[j].toString())) {
+                    date = formatDateString(row[j].toString());
+                    dateColIndex = j; // 日付列を記憶
+                    break;
+                }
+            }
+        }
+        
+        if (!date) continue;
+        
+        // 各データタイプの値を取得
+        if (forecastColIndex >= 0 && row[forecastColIndex]) {
+            const value = parseFloat(row[forecastColIndex]) || 0;
+            if (value > 0) touristData.forecast[date] = value;
+        }
+        
+        if (actualColIndex >= 0 && row[actualColIndex]) {
+            const value = parseFloat(row[actualColIndex]) || 0;
+            if (value > 0) touristData.actual[date] = value;
+        }
+        
+        if (progressColIndex >= 0 && row[progressColIndex]) {
+            const value = parseFloat(row[progressColIndex]) || 0;
+            if (value > 0) touristData.progress[date] = value;
+        }
+        
+        // もしデータタイプ列がない場合、すべて予測データとして扱う
+        if (forecastColIndex === -1 && actualColIndex === -1 && progressColIndex === -1) {
+            for (let j = 0; j < row.length; j++) {
+                if (j !== dateColIndex && row[j]) {
+                    const value = parseFloat(row[j]) || 0;
+                    if (value > 0) {
+                        touristData.forecast[date] = value;
+                        break; // 最初の数値を使用
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 観光客数分析機能を有効化
+function enableTouristAnalysis() {
+    // 新しいチャートタブを追加（既存の場合はスキップ）
+    if (!document.querySelector('[data-chart="tourist"]')) {
+        const chartTabs = document.querySelector('.chart-tabs');
+        const touristTab = document.createElement('button');
+        touristTab.className = 'chart-tab';
+        touristTab.dataset.chart = 'tourist';
+        touristTab.innerHTML = '<i class="fas fa-users"></i> 観光客数分析';
+        chartTabs.appendChild(touristTab);
+        
+        // イベントリスナーを追加
+        touristTab.addEventListener('click', (e) => {
+            document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            currentChartType = 'tourist';
+            // 観光客数分析用の施設フィルターを表示
+            showTouristFacilityFilter();
+            updateChart();
+        });
+    }
+    
+    // 観光客数統計を表示
+    document.getElementById('touristStats').style.display = 'flex';
+    updateTouristStatistics();
+}
+
+// 観光客数統計を更新
+function updateTouristStatistics() {
+    if (!touristData) return;
+    
+    // フィルター期間を取得
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    // 期間内の合計を計算
+    let forecastTotal = 0;
+    let actualTotal = 0;
+    let lastYearTotal = 0;
+    let twoYearsAgoTotal = 0;
+    
+    // データの集計
+    const aggregateData = (dataObj, startDate, endDate) => {
+        let total = 0;
+        for (const [date, value] of Object.entries(dataObj)) {
+            if ((!startDate || date >= startDate) && (!endDate || date <= endDate)) {
+                total += value;
+            }
+        }
+        return total;
+    };
+    
+    // 各データの合計を計算
+    if (touristData.forecast) {
+        forecastTotal = aggregateData(touristData.forecast, startDate, endDate);
+    }
+    
+    if (touristData.actual) {
+        actualTotal = aggregateData(touristData.actual, startDate, endDate);
+    }
+    
+    if (touristData.lastYear) {
+        lastYearTotal = aggregateData(touristData.lastYear, startDate, endDate);
+    }
+    
+    if (touristData.twoYearsAgo) {
+        twoYearsAgoTotal = aggregateData(touristData.twoYearsAgo, startDate, endDate);
+    }
+    
+    // 予想合計
+    const forecastElement = document.getElementById('touristForecast');
+    if (forecastElement) {
+        forecastElement.textContent = forecastTotal > 0 ? forecastTotal.toLocaleString() + '人' : '-';
+    }
+    
+    // オンハンド合計
+    const actualElement = document.getElementById('touristActual');
+    if (actualElement) {
+        actualElement.textContent = actualTotal > 0 ? actualTotal.toLocaleString() + '人' : '-';
+    }
+    
+    // 前年実績合計
+    const lastYearElement = document.getElementById('lastYearActual');
+    if (lastYearElement) {
+        lastYearElement.textContent = lastYearTotal > 0 ? lastYearTotal.toLocaleString() + '人' : '-';
+    }
+    
+    // 一昨年実績合計
+    const twoYearsAgoElement = document.getElementById('twoYearsAgoActual');
+    if (twoYearsAgoElement) {
+        twoYearsAgoElement.textContent = twoYearsAgoTotal > 0 ? twoYearsAgoTotal.toLocaleString() + '人' : '-';
+    }
+    
+    // ラベルも更新
+    const forecastLabel = document.querySelector('#touristStats .stat-card:nth-child(1) .stat-change span');
+    const actualLabel = document.querySelector('#touristStats .stat-card:nth-child(2) .stat-change span');
+    const lastYearLabel = document.querySelector('#touristStats .stat-card:nth-child(3) .stat-change span');
+    const twoYearsAgoLabel = document.querySelector('#touristStats .stat-card:nth-child(4) .stat-change span');
+    
+    if (forecastLabel) forecastLabel.textContent = '期間内の予想合計';
+    if (actualLabel) actualLabel.textContent = '期間内のオンハンド合計';
+    if (lastYearLabel) lastYearLabel.textContent = '期間内の前年実績合計';
+    if (twoYearsAgoLabel) twoYearsAgoLabel.textContent = '期間内の一昨年実績合計';
+}
+
 // フィルター適用
 function applyFilters() {
     const startDate = document.getElementById('startDate').value;
@@ -516,6 +1342,11 @@ function applyFilters() {
     renderTable();
     updateStatistics();
     updateChart();
+    
+    // 観光客数統計も更新
+    if (touristData) {
+        updateTouristStatistics();
+    }
 }
 
 // フィルターリセット
@@ -556,11 +1387,21 @@ function updateStatistics() {
     const prices = filteredData.filter(d => d.price > 0).map(d => d.price);
     
     if (prices.length === 0) {
-        document.getElementById('avgPrice').textContent = '-';
-        document.getElementById('maxPriceVal').textContent = '-';
-        document.getElementById('minPriceVal').textContent = '-';
-        document.getElementById('medianPrice').textContent = '-';
-        document.getElementById('dataCount').textContent = '-';
+        const elementsToUpdate = {
+            'avgPrice': '-',
+            'maxPriceVal': '-',
+            'minPriceVal': '-',
+            'medianPrice': '-',
+            'dataCount': '-',
+            'priceVariation': '-'
+        };
+        
+        for (const [id, value] of Object.entries(elementsToUpdate)) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        }
         return;
     }
     
@@ -568,42 +1409,81 @@ function updateStatistics() {
     const max = Math.max(...prices);
     const min = Math.min(...prices);
     
-    // 中央値を計算
+    // 中央値を計算（偶数個の場合は平均に近い方を採用）
     const sortedPrices = [...prices].sort((a, b) => a - b);
-    const median = sortedPrices.length % 2 === 0
-        ? (sortedPrices[sortedPrices.length / 2 - 1] + sortedPrices[sortedPrices.length / 2]) / 2
-        : sortedPrices[Math.floor(sortedPrices.length / 2)];
+    let median;
+    if (sortedPrices.length % 2 === 0) {
+        // 偶数個の場合、2つの中央値候補から平均に近い方を選択
+        const mid1 = sortedPrices[sortedPrices.length / 2 - 1];
+        const mid2 = sortedPrices[sortedPrices.length / 2];
+        const diff1 = Math.abs(mid1 - avg);
+        const diff2 = Math.abs(mid2 - avg);
+        median = diff1 <= diff2 ? mid1 : mid2;
+    } else {
+        median = sortedPrices[Math.floor(sortedPrices.length / 2)];
+    }
     
     // 最高/最低価格の施設を特定
     const maxItem = filteredData.find(d => d.price === max);
     const minItem = filteredData.find(d => d.price === min);
     
-    document.getElementById('avgPrice').textContent = formatPrice(Math.round(avg));
+    const avgPriceElement = document.getElementById('avgPrice');
+    if (avgPriceElement) {
+        avgPriceElement.textContent = formatPrice(Math.round(avg));
+    }
     
     // 最高価格にツールチップ用の属性を追加
     const maxPriceElement = document.getElementById('maxPriceVal');
-    maxPriceElement.textContent = formatPrice(max);
-    if (maxItem) {
-        maxPriceElement.dataset.tooltip = `施設: ${maxItem.facility}\n日付: ${maxItem.date}\n${maxItem.roomType ? '部屋: ' + maxItem.roomType + '\n' : ''}${maxItem.planName ? 'プラン: ' + maxItem.planName : ''}`;
-        maxPriceElement.classList.add('has-tooltip');
+    if (maxPriceElement) {
+        maxPriceElement.textContent = formatPrice(max);
+        if (maxItem) {
+            maxPriceElement.dataset.tooltip = `施設: ${maxItem.facility}\n日付: ${maxItem.date}\n${maxItem.roomType ? '部屋: ' + maxItem.roomType + '\n' : ''}${maxItem.planName ? 'プラン: ' + maxItem.planName : ''}`;
+            maxPriceElement.classList.add('has-tooltip');
+        }
     }
     
     // 最低価格にツールチップ用の属性を追加
     const minPriceElement = document.getElementById('minPriceVal');
-    minPriceElement.textContent = formatPrice(min);
-    if (minItem) {
-        minPriceElement.dataset.tooltip = `施設: ${minItem.facility}\n日付: ${minItem.date}\n${minItem.roomType ? '部屋: ' + minItem.roomType + '\n' : ''}${minItem.planName ? 'プラン: ' + minItem.planName : ''}`;
-        minPriceElement.classList.add('has-tooltip');
+    if (minPriceElement) {
+        minPriceElement.textContent = formatPrice(min);
+        if (minItem) {
+            minPriceElement.dataset.tooltip = `施設: ${minItem.facility}\n日付: ${minItem.date}\n${minItem.roomType ? '部屋: ' + minItem.roomType + '\n' : ''}${minItem.planName ? 'プラン: ' + minItem.planName : ''}`;
+            minPriceElement.classList.add('has-tooltip');
+        }
     }
     
-    document.getElementById('medianPrice').textContent = formatPrice(Math.round(median));
-    document.getElementById('dataCount').textContent = filteredData.length.toLocaleString();
+    // 中央値の要素が存在する場合のみ設定
+    const medianElement = document.getElementById('medianPrice');
+    if (medianElement) {
+        medianElement.textContent = formatPrice(Math.round(median));
+    }
     
-    document.getElementById('maxFacility').textContent = maxItem ? maxItem.facility : '-';
-    document.getElementById('minFacility').textContent = minItem ? minItem.facility : '-';
+    const dataCountElement = document.getElementById('dataCount');
+    if (dataCountElement) {
+        dataCountElement.textContent = filteredData.length.toLocaleString();
+    }
+    
+    // 価格変動率を中央値に変更
+    const priceVariationElement = document.getElementById('priceVariation');
+    if (priceVariationElement) {
+        priceVariationElement.textContent = formatPrice(Math.round(median));
+    }
+    
+    const maxFacilityElement = document.getElementById('maxFacility');
+    if (maxFacilityElement) {
+        maxFacilityElement.textContent = maxItem ? maxItem.facility : '-';
+    }
+    
+    const minFacilityElement = document.getElementById('minFacility');
+    if (minFacilityElement) {
+        minFacilityElement.textContent = minItem ? minItem.facility : '-';
+    }
     
     const facilityCount = new Set(filteredData.map(d => d.facility)).size;
-    document.getElementById('facilityCount').textContent = `${facilityCount}施設`;
+    const facilityCountElement = document.getElementById('facilityCount');
+    if (facilityCountElement) {
+        facilityCountElement.textContent = `${facilityCount}施設`;
+    }
     
     // 統計値のホバーイベントを追加
     addStatHoverEvents();
@@ -662,9 +1542,21 @@ function renderTable() {
     
     // ヘッダー作成
     let headerRow = '<tr><th class="sortable facility-name-column" data-sort="facility">施設名</th>';
-    headerRow += uniqueDates.map(date => 
-        `<th class="sortable date-column" data-sort="${date}">${formatDisplayDate(date)}</th>`
-    ).join('');
+    headerRow += uniqueDates.map(date => {
+        // 曜日判定
+        const d = new Date(date);
+        const dayOfWeek = d.getDay();
+        const isSaturday = dayOfWeek === 6;
+        const isSunday = dayOfWeek === 0;
+        const isHoliday = checkIsHoliday(date);
+        let dateClass = '';
+        if (isSaturday) {
+            dateClass = 'saturday-header';
+        } else if (isSunday || isHoliday) {
+            dateClass = 'sunday-holiday-header';
+        }
+        return `<th class="sortable date-column ${dateClass}" data-sort="${date}">${formatDisplayDate(date)}</th>`;
+    }).join('');
     headerRow += '</tr>';
     tableHead.innerHTML = headerRow;
     
@@ -676,31 +1568,21 @@ function renderTable() {
     // ボディ作成
     let rows = pageData.map(facility => {
         let row = `<tr>`;
+        const displayName = facility.length > 20 ? facility.substring(0, 20) + '...' : facility;
+        const titleAttr = facility.length > 20 ? `title="${facility}"` : '';
+        
         row += `<td class="facility-name-cell" style="min-width: 200px; width: 200px;">
             <span class="favorite-toggle ${favorites.has(facility) ? 'active' : ''}" 
                   onclick="toggleFavorite('${facility}')" title="お気に入り">
                 <i class="fas fa-star"></i>
             </span>
-            <strong>${facility}</strong>
+            <strong ${titleAttr} style="cursor: ${facility.length > 20 ? 'help' : 'default'};">${displayName}</strong>
         </td>`;
         
         row += uniqueDates.map(date => {
             const price = pivotData[facility][date] || 0;
             const priceClass = getPriceClass(price);
             const cellClass = price > 0 ? 'available' : 'unavailable';
-            
-            // 曜日判定
-            const d = new Date(date);
-            const dayOfWeek = d.getDay();
-            const isSaturday = dayOfWeek === 6;
-            const isSunday = dayOfWeek === 0;
-            const isHoliday = checkIsHoliday(date);
-            let dateClass = '';
-            if (isSaturday) {
-                dateClass = 'saturday-cell';
-            } else if (isSunday || isHoliday) {
-                dateClass = 'sunday-holiday-cell';
-            }
             
             // 詳細情報をデータ属性として追加
             const detailKey = `${facility}_${date}`;
@@ -723,7 +1605,7 @@ function renderTable() {
             // 表示値のフォーマット
             const displayText = formatPrice(price);
             
-            return `<td class="price-cell ${cellClass} ${priceClass} ${dateClass}" 
+            return `<td class="price-cell ${cellClass} ${priceClass}" 
                     data-facility="${facility}" 
                     data-date="${date}" 
                     data-price="${price}"
@@ -747,11 +1629,18 @@ function renderTable() {
             
             if (pricesForDate.length > 0) {
                 if (showMedianMode) {
-                    // 中央値を計算
+                    // 中央値を計算（偶数個の場合は平均に近い方を採用）
                     const sorted = [...pricesForDate].sort((a, b) => a - b);
-                    statPrice = sorted.length % 2 === 0
-                        ? Math.round((sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2)
-                        : sorted[Math.floor(sorted.length / 2)];
+                    const avg = pricesForDate.reduce((a, b) => a + b, 0) / pricesForDate.length;
+                    if (sorted.length % 2 === 0) {
+                        const mid1 = sorted[sorted.length / 2 - 1];
+                        const mid2 = sorted[sorted.length / 2];
+                        const diff1 = Math.abs(mid1 - avg);
+                        const diff2 = Math.abs(mid2 - avg);
+                        statPrice = Math.round(diff1 <= diff2 ? mid1 : mid2);
+                    } else {
+                        statPrice = sorted[Math.floor(sorted.length / 2)];
+                    }
                 } else {
                     // 平均を計算
                     statPrice = Math.round(pricesForDate.reduce((a, b) => a + b, 0) / pricesForDate.length);
@@ -923,27 +1812,50 @@ function goToPage(page) {
 
 // チャート更新
 function updateChart() {
-    const ctx = document.getElementById('analysisChart').getContext('2d');
-    
-    if (currentChart) {
-        currentChart.destroy();
-    }
-    
-    // 既存の説明文を削除
-    const existingDesc = document.querySelector('.chart-description');
-    if (existingDesc) {
-        existingDesc.remove();
-    }
-    
-    switch (currentChartType) {
-        case 'trend':
-            addChartDescription('選択した施設の価格推移を時系列で表示します。トレンドや季節変動を把握できます。');
-            createTrendChart(ctx);
-            break;
-        case 'heatmap':
-            addChartDescription('施設と日付の組み合わせで価格を色の濃淡で表現します。パターンを視覚的に把握できます。');
-            createHeatmapChart(ctx);
-            break;
+    try {
+        const canvas = document.getElementById('analysisChart');
+        if (!canvas) {
+            console.error('Chart canvas not found');
+            return;
+        }
+        
+        const ctx = canvas.getContext('2d');
+        
+        if (currentChart) {
+            currentChart.destroy();
+            currentChart = null;
+        }
+        
+        // 既存の説明文を削除
+        const existingDesc = document.querySelector('.chart-description');
+        if (existingDesc) {
+            existingDesc.remove();
+        }
+        
+        // ヒートマップ凡例の表示/非表示
+        const heatmapLegend = document.getElementById('heatmapLegend');
+        if (heatmapLegend) {
+            heatmapLegend.style.display = currentChartType === 'heatmap' ? 'block' : 'none';
+        }
+        
+        // データがない場合の処理
+        if (!filteredData || filteredData.length === 0) {
+            ctx.font = '16px sans-serif';
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'center';
+            ctx.fillText('データがありません', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+        
+        switch (currentChartType) {
+            case 'trend':
+                addChartDescription('選択した施設の価格推移を時系列で表示します。トレンドや季節変動を把握できます。');
+                createTrendChart(ctx);
+                break;
+            case 'heatmap':
+                addChartDescription('施設と日付の組み合わせで価格を色の濃淡で表現します。パターンを視覚的に把握できます。');
+                createHeatmapChart(ctx);
+                break;
         case 'distribution':
             addChartDescription('価格帯別の分布を表示します。価格設定の傾向を分析できます。');
             createDistributionChart(ctx);
@@ -951,6 +1863,17 @@ function updateChart() {
         case 'weekday':
             addChartDescription('曜日別の平均価格を表示します。週末料金の傾向を把握できます。');
             createWeekdayChart(ctx);
+            break;
+        case 'tourist':
+            if (touristData) {
+                addChartDescription('観光客数の予想・実績・予約進捗と価格の相関を分析します。');
+                createTouristAnalysisChart(ctx);
+            } else {
+                ctx.font = '16px sans-serif';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.fillText('観光客数データを読み込んでください', ctx.canvas.width / 2, ctx.canvas.height / 2);
+            }
             break;
         case 'forecast':
             addChartDescription('過去のデータから今後7日間の価格を予測します。移動平均を使用した簡易予測です。');
@@ -960,6 +1883,18 @@ function updateChart() {
             addChartDescription('複数施設の価格を比較します。競合分析に活用できます。');
             createComparisonChart(ctx);
             break;
+    }
+    } catch (error) {
+        console.error('Chart update error:', error);
+        const canvas = document.getElementById('analysisChart');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '16px sans-serif';
+            ctx.fillStyle = '#f44336';
+            ctx.textAlign = 'center';
+            ctx.fillText('チャートの表示中にエラーが発生しました', canvas.width / 2, canvas.height / 2);
+        }
     }
 }
 
@@ -991,6 +1926,28 @@ function createTrendChart(ctx) {
             fill: false,
             tension: 0.1
         };
+    });
+    
+    // 日ごとの平均価格を計算
+    const avgData = dates.map(date => {
+        const pricesForDate = filteredData
+            .filter(d => d.date === date && d.price > 0)
+            .map(d => d.price);
+        
+        if (pricesForDate.length === 0) return null;
+        return Math.round(pricesForDate.reduce((sum, p) => sum + p, 0) / pricesForDate.length);
+    });
+    
+    // 平均線を追加
+    datasets.push({
+        label: '全施設平均',
+        data: avgData,
+        borderColor: 'rgba(128, 128, 128, 1)',
+        backgroundColor: 'rgba(128, 128, 128, 0.1)',
+        borderWidth: 3,
+        borderDash: [10, 5],
+        fill: false,
+        tension: 0.1
     });
     
     currentChart = new Chart(ctx, {
@@ -1185,6 +2142,21 @@ function createHeatmapChart(ctx) {
                 title: {
                     display: true,
                     text: '価格ヒートマップ'
+                },
+                zoom: {
+                    zoom: {
+                        wheel: {
+                            enabled: true,
+                        },
+                        pinch: {
+                            enabled: true
+                        },
+                        mode: 'xy',
+                    },
+                    pan: {
+                        enabled: true,
+                        mode: 'xy',
+                    }
                 }
             }
         }
@@ -1455,38 +2427,87 @@ function createComparisonChart(ctx) {
                 avg: 0,
                 min: 0,
                 max: 0,
-                count: 0
+                median: 0,
+                occupancyRate: 0,
+                weekendPremium: 0
             };
         }
+        
+        // 中央値を計算
+        const sortedPrices = [...prices].sort((a, b) => a - b);
+        const median = sortedPrices.length % 2 === 0 
+            ? (sortedPrices[sortedPrices.length / 2 - 1] + sortedPrices[sortedPrices.length / 2]) / 2
+            : sortedPrices[Math.floor(sortedPrices.length / 2)];
+        
+        // 稼働率（価格が設定されている日の割合）
+        const totalDays = [...new Set(filteredData.filter(d => d.facility === facility).map(d => d.date))].length;
+        const occupancyRate = (prices.length / totalDays) * 100;
+        
+        // 週末プレミアム（土日の平均価格と平日の差）
+        const weekendPrices = [];
+        const weekdayPrices = [];
+        
+        facilityData.forEach(d => {
+            const dayOfWeek = new Date(d.date).getDay();
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                weekendPrices.push(d.price);
+            } else {
+                weekdayPrices.push(d.price);
+            }
+        });
+        
+        const weekendAvg = weekendPrices.length > 0 ? weekendPrices.reduce((a, b) => a + b, 0) / weekendPrices.length : 0;
+        const weekdayAvg = weekdayPrices.length > 0 ? weekdayPrices.reduce((a, b) => a + b, 0) / weekdayPrices.length : 0;
+        const weekendPremium = weekdayAvg > 0 ? ((weekendAvg - weekdayAvg) / weekdayAvg) * 100 : 0;
         
         return {
             facility: facility,
             avg: prices.reduce((a, b) => a + b, 0) / prices.length,
             min: Math.min(...prices),
             max: Math.max(...prices),
-            count: prices.length
+            median: median,
+            occupancyRate: occupancyRate,
+            weekendPremium: weekendPremium
         };
     });
     
+    // バーチャートで比較
     currentChart = new Chart(ctx, {
-        type: 'radar',
+        type: 'bar',
         data: {
-            labels: ['平均価格', '最低価格', '最高価格', 'データ数'],
-            datasets: stats.map((stat, index) => ({
-                label: stat.facility,
-                data: [
-                    stat.avg / 1000, // 千円単位
-                    stat.min / 1000,
-                    stat.max / 1000,
-                    stat.count / 10 // スケール調整
-                ],
-                borderColor: getChartColor(index),
-                backgroundColor: getChartColor(index, 0.2),
-                pointBackgroundColor: getChartColor(index),
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: getChartColor(index)
-            }))
+            labels: stats.map(s => s.facility),
+            datasets: [
+                {
+                    label: '平均価格',
+                    data: stats.map(s => Math.round(s.avg)),
+                    backgroundColor: getChartColor(0, 0.7),
+                    borderColor: getChartColor(0),
+                    borderWidth: 1
+                },
+                {
+                    label: '中央値',
+                    data: stats.map(s => Math.round(s.median)),
+                    backgroundColor: getChartColor(1, 0.7),
+                    borderColor: getChartColor(1),
+                    borderWidth: 1
+                },
+                {
+                    label: '週末プレミアム(%)',
+                    data: stats.map(s => Math.round(s.weekendPremium)),
+                    backgroundColor: getChartColor(2, 0.7),
+                    borderColor: getChartColor(2),
+                    borderWidth: 1,
+                    yAxisID: 'y-percentage'
+                },
+                {
+                    label: '稼働率(%)',
+                    data: stats.map(s => Math.round(s.occupancyRate)),
+                    backgroundColor: getChartColor(3, 0.7),
+                    borderColor: getChartColor(3),
+                    borderWidth: 1,
+                    yAxisID: 'y-percentage'
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -1494,18 +2515,239 @@ function createComparisonChart(ctx) {
             plugins: {
                 title: {
                     display: true,
-                    text: '施設比較'
+                    text: '施設比較分析'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const label = context.dataset.label;
+                            const value = context.parsed.y;
+                            
+                            if (label.includes('価格') || label.includes('中央値')) {
+                                return `${label}: ${formatPrice(value)}`;
+                            } else {
+                                return `${label}: ${value}%`;
+                            }
+                        }
+                    }
                 }
             },
             scales: {
-                r: {
-                    beginAtZero: true,
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: '施設'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: '価格 (円)'
+                    },
                     ticks: {
-                        callback: (value, index) => {
-                            const labels = ['平均価格', '最低価格', '最高価格', 'データ数'];
-                            if (index < 3) return `¥${value}k`;
-                            return value * 10;
+                        callback: (value) => formatPrice(value)
+                    }
+                },
+                'y-percentage': {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'パーセント (%)'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    ticks: {
+                        callback: (value) => value + '%'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 観光客数分析チャート
+function createTouristAnalysisChart(ctx) {
+    const dates = [...new Set(filteredData.map(d => d.date))].sort();
+    
+    // 日付ごとの平均価格を計算
+    const avgPrices = dates.map(date => {
+        const pricesForDate = filteredData.filter(d => d.date === date && d.price > 0);
+        if (pricesForDate.length === 0) return null;
+        return pricesForDate.reduce((sum, d) => sum + d.price, 0) / pricesForDate.length;
+    });
+    
+    // 選択された施設の価格データを取得
+    const selectedFacility = document.getElementById('touristFacilitySelect')?.value;
+    let facilityPrices = null;
+    if (selectedFacility) {
+        facilityPrices = dates.map(date => {
+            const facilityData = filteredData.find(d => d.date === date && d.facility === selectedFacility && d.price > 0);
+            return facilityData ? facilityData.price : null;
+        });
+    }
+    
+    // 観光客数データを日付に合わせて取得
+    const forecastData = dates.map(date => touristData.forecast[date] || null);
+    const actualData = dates.map(date => touristData.actual[date] || null);
+    const lastYearData = dates.map(date => touristData.lastYear[date] || null);
+    const twoYearsAgoData = dates.map(date => touristData.twoYearsAgo[date] || null);
+    
+    currentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates.map(date => {
+                const d = new Date(date);
+                return `${d.getMonth() + 1}/${d.getDate()}`;
+            }),
+            datasets: (() => {
+                const datasets = [
+                    {
+                        label: '平均価格',
+                        data: avgPrices,
+                        borderColor: 'rgba(33, 150, 243, 1)',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        yAxisID: 'y-price',
+                        tension: 0.1
+                    }
+                ];
+                
+                // 選択された施設の価格を追加
+                if (facilityPrices) {
+                    datasets.push({
+                        label: `${selectedFacility}の価格`,
+                        data: facilityPrices,
+                        borderColor: 'rgba(244, 67, 54, 1)',
+                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        yAxisID: 'y-price',
+                        tension: 0.1,
+                        borderWidth: 3
+                    });
+                }
+                
+                // 観光客数データを追加
+                datasets.push(
+                    {
+                        label: '観光客数（予想）',
+                        data: forecastData,
+                        borderColor: 'rgba(255, 152, 0, 1)',
+                        backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                        borderDash: [5, 5],
+                        yAxisID: 'y-tourist',
+                        tension: 0.1
+                    },
+                    {
+                        label: '観光客数（オンハンド）',
+                        data: actualData,
+                        borderColor: 'rgba(76, 175, 80, 1)',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        yAxisID: 'y-tourist',
+                        tension: 0.1
+                    },
+                    {
+                        label: '観光客数（前年実績）',
+                        data: lastYearData,
+                        borderColor: 'rgba(156, 39, 176, 1)',
+                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                        borderDash: [3, 3],
+                        yAxisID: 'y-tourist',
+                        tension: 0.1
+                    },
+                    {
+                        label: '観光客数（一昨年実績）',
+                        data: twoYearsAgoData,
+                        borderColor: 'rgba(96, 125, 139, 1)',
+                        backgroundColor: 'rgba(96, 125, 139, 0.1)',
+                        borderDash: [5, 2],
+                        yAxisID: 'y-tourist',
+                        tension: 0.1
+                    }
+                );
+                
+                return datasets;
+            })()
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: '観光客数と価格の相関分析'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const label = context.dataset.label;
+                            const value = context.parsed.y;
+                            
+                            if (label.includes('価格')) {
+                                return `${label}: ${formatPrice(value)}`;
+                            } else {
+                                return `${label}: ${value ? value.toLocaleString() : '-'}人`;
+                            }
                         }
+                    }
+                },
+                zoom: {
+                    zoom: {
+                        wheel: {
+                            enabled: true,
+                        },
+                        pinch: {
+                            enabled: true
+                        },
+                        mode: 'x',
+                    },
+                    pan: {
+                        enabled: true,
+                        mode: 'x',
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: '日付'
+                    }
+                },
+                'y-price': {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: '平均価格 (円)'
+                    },
+                    ticks: {
+                        callback: (value) => formatPrice(value)
+                    }
+                },
+                'y-tourist': {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: '観光客数 (人)'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    ticks: {
+                        callback: (value) => value.toLocaleString()
                     }
                 }
             }
@@ -1523,6 +2765,31 @@ function getChartColor(index, opacity = 1) {
         `rgba(156, 39, 176, ${opacity})`
     ];
     return colors[index % colors.length];
+}
+
+// 平均/中央値モード切り替え
+function toggleMedianMode() {
+    showMedianMode = !showMedianMode;
+    const btn = document.getElementById('medianToggleBtn');
+    btn.innerHTML = showMedianMode ? 
+        '<i class="fas fa-calculator"></i> 平均表示' : 
+        '<i class="fas fa-calculator"></i> 中央値表示';
+    renderTable();
+}
+
+// 人数切り替え
+function switchGuestCount(count) {
+    currentGuestCount = parseInt(count);
+    
+    // 該当する人数のデータがある場合は切り替え
+    if (guestCountData[currentGuestCount]) {
+        originalData = guestCountData[currentGuestCount];
+        applyFilters();
+    } else {
+        alert(`${count}名のデータがありません。`);
+        // 元の人数に戻す
+        document.getElementById('guestCount').value = currentGuestCount;
+    }
 }
 
 // お気に入り切替
@@ -2207,6 +3474,9 @@ window.toggleChartType = toggleChartType;
 window.toggleFullscreen = toggleFullscreen;
 window.toggleAverageMode = toggleAverageMode;
 window.handleGuestCountChange = handleGuestCountChange;
+window.toggleMedianMode = toggleMedianMode;
+window.switchGuestCount = switchGuestCount;
+window.handleFiles = handleFiles;
 
 // ヒートマップズーム機能
 let heatmapZoomLevel = 1;
@@ -2222,6 +3492,67 @@ function heatmapZoom(factor) {
 }
 
 window.heatmapZoom = heatmapZoom;
+
+// 観光客数分析用の施設フィルター表示
+function showTouristFacilityFilter() {
+    const filterDiv = document.getElementById('touristFacilityFilter');
+    const selectElement = document.getElementById('touristFacilitySelect');
+    
+    if (filterDiv && selectElement) {
+        // 施設リストを更新
+        updateTouristFacilityList();
+        filterDiv.style.display = 'block';
+        
+        // 選択変更時のイベントリスナーを設定（重複を避けるため一度削除）
+        selectElement.removeEventListener('change', handleTouristFacilityChange);
+        selectElement.addEventListener('change', handleTouristFacilityChange);
+    }
+}
+
+// 観光客数分析用の施設フィルター非表示
+function hideTouristFacilityFilter() {
+    const filterDiv = document.getElementById('touristFacilityFilter');
+    if (filterDiv) {
+        filterDiv.style.display = 'none';
+    }
+}
+
+// 施設リストを更新
+function updateTouristFacilityList() {
+    const selectElement = document.getElementById('touristFacilitySelect');
+    if (!selectElement) return;
+    
+    // 現在の選択値を保存
+    const currentValue = selectElement.value;
+    
+    // オプションをクリア
+    selectElement.innerHTML = '<option value="">施設を選択...</option>';
+    
+    // 施設リストを取得
+    const facilities = [...new Set(filteredData.map(d => d.facility))].sort();
+    
+    // オプションを追加
+    facilities.forEach(facility => {
+        const option = document.createElement('option');
+        option.value = facility;
+        const displayName = facility.length > 20 ? facility.substring(0, 20) + '...' : facility;
+        option.textContent = displayName;
+        if (facility.length > 20) {
+            option.title = facility;
+        }
+        selectElement.appendChild(option);
+    });
+    
+    // 以前の選択値を復元（存在する場合）
+    if (currentValue && facilities.includes(currentValue)) {
+        selectElement.value = currentValue;
+    }
+}
+
+// 施設選択変更時の処理
+function handleTouristFacilityChange() {
+    updateChart();
+}
 
 // 該当なし通知表示
 function showNoMatchNotification(alertCount) {

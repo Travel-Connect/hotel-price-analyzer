@@ -61,16 +61,35 @@
                 <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple style="display: none;">
                 <div class="upload-dropzone" id="uploadDropzone">
                     <i class="fas fa-cloud-upload-alt fa-3x" style="color: var(--primary); margin-bottom: 16px;"></i>
-                    <p style="font-size: 1.1em; margin-bottom: 8px;">ファイルをドラッグ&ドロップ</p>
+                    <p style="font-size: 1.1em; margin-bottom: 8px;">価格データをドラッグ&ドロップ</p>
                     <p style="color: var(--text-secondary); margin-bottom: 16px;">または</p>
                     <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
-                        ファイルを選択
+                        価格データを選択
                     </button>
                     <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 16px;">
                         対応形式: Excel (.xlsx, .xls), CSV
                     </p>
                 </div>
                 <div id="fileList" class="file-list" style="margin-top: 16px;"></div>
+            </div>
+            
+            <!-- 観光客数データアップロード -->
+            <div style="border-top: 1px solid #e0e0e0; margin-top: 20px; padding-top: 20px;">
+                <h3 style="font-size: 1.1em; margin-bottom: 12px;">
+                    <i class="fas fa-chart-line"></i>
+                    観光客数データ（オプション）
+                </h3>
+                <input type="file" id="touristFileInput" accept=".xlsx,.xls,.csv" style="display: none;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('touristFileInput').click()">
+                        <i class="fas fa-file-excel"></i>
+                        観光客数データを選択
+                    </button>
+                    <span id="touristFileName" style="color: var(--text-secondary); font-size: 0.9em;">未選択</span>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 8px;">
+                    観光客数の予想/実績/予約進捗データを読み込みます
+                </p>
             </div>
         </div>
 
@@ -92,14 +111,14 @@
                 <div class="filter-group">
                     <label class="filter-label">日付範囲</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <div class="date-input-wrapper" style="flex: 1;">
+                        <div class="date-input-wrapper" style="flex: 1; min-width: 120px;">
                             <i class="fas fa-calendar date-icon"></i>
-                            <input type="text" id="startDate" class="date-input" placeholder="開始日">
+                            <input type="text" id="startDate" class="date-input" placeholder="開始日" style="width: 100%;">
                         </div>
                         <span style="color: var(--text-secondary);">〜</span>
-                        <div class="date-input-wrapper" style="flex: 1;">
+                        <div class="date-input-wrapper" style="flex: 1; min-width: 120px;">
                             <i class="fas fa-calendar date-icon"></i>
-                            <input type="text" id="endDate" class="date-input" placeholder="終了日">
+                            <input type="text" id="endDate" class="date-input" placeholder="終了日" style="width: 100%;">
                         </div>
                     </div>
                 </div>
@@ -114,6 +133,15 @@
                     </div>
                 </div>
 
+                <!-- 人数選択 -->
+                <div class="filter-group">
+                    <label class="filter-label">人数</label>
+                    <select id="guestCount" class="date-input" onchange="switchGuestCount(this.value)">
+                        <option value="2">2名</option>
+                        <option value="4">4名</option>
+                    </select>
+                </div>
+                
                 <!-- 施設選択 -->
                 <div class="filter-group">
                     <label class="filter-label">施設選択</label>
@@ -192,12 +220,12 @@
 
                 <div class="stat-card warning">
                     <div class="stat-icon" style="background: rgba(255, 152, 0, 0.1); color: var(--warning);">
-                        <i class="fas fa-percentage"></i>
+                        <i class="fas fa-chart-line"></i>
                     </div>
-                    <div class="stat-label">価格変動率</div>
+                    <div class="stat-label">中央値</div>
                     <div class="stat-value" id="priceVariation">-</div>
                     <div class="stat-change neutral">
-                        <span>標準偏差</span>
+                        <span>価格の中央値</span>
                     </div>
                 </div>
 
@@ -210,6 +238,53 @@
                     <div class="stat-value" id="dataCount">-</div>
                     <div class="stat-change">
                         <span id="facilityCount">0施設</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 観光客数統計（データがある場合のみ表示） -->
+            <div class="stats-grid" id="touristStats" style="display: none; margin-top: 16px;">
+                <div class="stat-card info">
+                    <div class="stat-icon" style="background: rgba(3, 169, 244, 0.1); color: var(--info);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-label">観光客数（予想）</div>
+                    <div class="stat-value" id="touristForecast">-</div>
+                    <div class="stat-change">
+                        <span>今日の予想</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card success">
+                    <div class="stat-icon" style="background: rgba(76, 175, 80, 0.1); color: var(--success);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-label">観光客数（オンハンド）</div>
+                    <div class="stat-value" id="touristActual">-</div>
+                    <div class="stat-change">
+                        <span>期間内のオンハンド合計</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card purple">
+                    <div class="stat-icon" style="background: rgba(156, 39, 176, 0.1); color: #9C27B0;">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="stat-label">観光客数（前年実績）</div>
+                    <div class="stat-value" id="lastYearActual">-</div>
+                    <div class="stat-change">
+                        <span>期間内の前年実績合計</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card warning">
+                    <div class="stat-icon" style="background: rgba(255, 152, 0, 0.1); color: var(--warning);">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-label">観光客数（一昨年実績）</div>
+                    <div class="stat-value" id="twoYearsAgoActual">-</div>
+                    <div class="stat-change">
+                        <span>期間内の一昨年実績合計</span>
                     </div>
                 </div>
             </div>
@@ -230,6 +305,10 @@
                     <button class="btn btn-secondary" onclick="toggleTableView()">
                         <i class="fas fa-th"></i>
                         表示切替
+                    </button>
+                    <button class="btn btn-secondary" onclick="toggleMedianMode()" id="medianToggleBtn">
+                        <i class="fas fa-calculator"></i>
+                        中央値表示
                     </button>
                 </div>
             </div>
@@ -288,8 +367,36 @@
                     <button class="chart-control" onclick="toggleChartType()" title="グラフタイプ切替">
                         <i class="fas fa-exchange-alt"></i>
                     </button>
+                    <!-- 観光客数分析用の施設選択 -->
+                    <div id="touristFacilityFilter" style="display: none; margin-left: 20px;">
+                        <select id="touristFacilitySelect" class="form-control" style="width: 200px; display: inline-block;">
+                            <option value="">施設を選択...</option>
+                        </select>
+                    </div>
                 </div>
                 <canvas id="analysisChart"></canvas>
+                <!-- ヒートマップ凡例 -->
+                <div id="heatmapLegend" style="display: none; margin-top: 20px;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <span style="font-size: 0.9em;">低価格</span>
+                        <div style="width: 200px; height: 20px; background: linear-gradient(to right, #0000ff, #ffff00, #ff0000); border-radius: 4px;"></div>
+                        <span style="font-size: 0.9em;">高価格</span>
+                    </div>
+                    <div style="text-align: center; margin-top: 8px; font-size: 0.85em; color: #666;">
+                        <span style="display: inline-block; margin: 0 10px;">
+                            <span style="display: inline-block; width: 12px; height: 12px; background: #0000ff; border-radius: 2px; vertical-align: middle;"></span>
+                            最低価格帯
+                        </span>
+                        <span style="display: inline-block; margin: 0 10px;">
+                            <span style="display: inline-block; width: 12px; height: 12px; background: #ffff00; border-radius: 2px; vertical-align: middle;"></span>
+                            平均価格帯
+                        </span>
+                        <span style="display: inline-block; margin: 0 10px;">
+                            <span style="display: inline-block; width: 12px; height: 12px; background: #ff0000; border-radius: 2px; vertical-align: middle;"></span>
+                            最高価格帯
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
 

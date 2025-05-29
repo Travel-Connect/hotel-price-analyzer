@@ -413,6 +413,7 @@ body.dark-mode .card {
 .stat-card.success::before { background: var(--success); }
 .stat-card.warning::before { background: var(--warning); }
 .stat-card.danger::before { background: var(--danger); }
+.stat-card.purple::before { background: #9C27B0; }
 
 .stat-icon {
     width: 48px;
@@ -619,10 +620,11 @@ body.dark-mode .card {
 }
 
 .chart-container {
-    height: 400px;
+    height: 600px;
+    max-height: 80vh;
     position: relative;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: auto;
     padding-bottom: 10px;
 }
 
